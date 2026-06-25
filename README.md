@@ -1,96 +1,86 @@
-# FluctuationAnalysis [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://MartinuzziFrancesco.github.io/FluctuationAnalysis.jl/stable/) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://MartinuzziFrancesco.github.io/FluctuationAnalysis.jl/dev/) [![Build Status](https://github.com/MartinuzziFrancesco/FluctuationAnalysis.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/MartinuzziFrancesco/FluctuationAnalysis.jl/actions/workflows/CI.yml?query=branch%3Amain) [![Coverage](https://codecov.io/gh/MartinuzziFrancesco/FluctuationAnalysis.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/MartinuzziFrancesco/FluctuationAnalysis.jl) [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle) [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac) [![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
+# FluctuationAnalysis
 
-A Julia package for fluctuation and scaling analysis of time series. It provides
-detrended fluctuation analysis (`dfa`) and its multifractal (`mfdfa`) and
-cross-correlation (`dcca`) extensions, the detrending moving average family
-(`dma`, `mfdma`), and Hurst exponent estimation (`hurst`). The package is built
-from reusable components (profile construction, scale generation, segmentation,
-detrending, fluctuation computation, and log-log fitting) that every method
-shares.
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://MartinuzziFrancesco.github.io/FluctuationAnalysis.jl/stable/)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://MartinuzziFrancesco.github.io/FluctuationAnalysis.jl/dev/)
+[![Build Status](https://github.com/MartinuzziFrancesco/FluctuationAnalysis.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/MartinuzziFrancesco/FluctuationAnalysis.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Coverage](https://codecov.io/gh/MartinuzziFrancesco/FluctuationAnalysis.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/MartinuzziFrancesco/FluctuationAnalysis.jl)
+[![SciML Code Style](https://img.shields.io/static/v1?label=code%20style&message=SciML&color=9558b2&labelColor=389826)](https://github.com/SciML/SciMLStyle)
+[![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
+[![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
-See the [documentation](https://MartinuzziFrancesco.github.io/FluctuationAnalysis.jl/dev/)
+FluctuationAnalysis.jl is a Julia package for fluctuation and scaling analysis of
+time series. It is built from a small set of reusable, composable components —
+profile construction, scale generation, segmentation, detrending, fluctuation
+computation, and log-log fitting — that every method shares, so the analyses stay
+consistent and new methods plug in cleanly. Each method returns a rich result
+object carrying the scales, fluctuation values, fitted exponents, and diagnostics.
+
+## Features
+
+FluctuationAnalysis.jl provides functions to estimate scaling exponents and
+characterize long-range correlations, multifractality, and cross-correlations in
+time series. More specifically the software offers:
+
+  - **Detrended fluctuation analysis** (`dfa`) with configurable polynomial
+    detrending order, scales, overlapping/bidirectional segmentation, and a
+    pluggable `AbstractDetrender` interface.
+  - **Multifractal DFA** (`mfdfa`), returning the generalized Hurst exponents
+    `h(q)`, the mass exponents `τ(q)`, the singularity strengths `α`, and the
+    singularity spectrum `f(α)`.
+  - **Detrended cross-correlation analysis** (`dcca`) for two series, returning
+    the cross-correlation exponent `λ`, the detrended cross-covariance, and the
+    DCCA cross-correlation coefficient `ρ_DCCA(s)`.
+  - **Detrending moving average** family (`dma`, `mfdma`), an alternative to the
+    polynomial detrending of DFA with a configurable window position `theta`.
+  - **Hurst exponent estimation** (`hurst`), from either the DFA scaling exponent
+    or rescaled range (R/S) analysis.
+  - **Reusable building blocks** (`logarithmic_scales`, `PolynomialDetrender`,
+    `MovingAverage`, fluctuation curves, `loglog_fit`) shared across every method
+    and exposed for building custom analyses.
+
+All methods are type-generic (`Float32`, `Float64`, `BigFloat`, …) and accept a
+wide range of array inputs. See the
+[documentation](https://MartinuzziFrancesco.github.io/FluctuationAnalysis.jl/dev/)
 for tutorials and the full API reference.
 
-## Usage
+## Installation
+
+FluctuationAnalysis.jl is not registered yet. You can install it directly from
+the repository using either of
+
+```julia
+julia> using Pkg
+julia> Pkg.add(url = "https://github.com/MartinuzziFrancesco/FluctuationAnalysis.jl")
+```
+
+or, from the Pkg REPL (press `]`):
+
+```julia
+pkg> add https://github.com/MartinuzziFrancesco/FluctuationAnalysis.jl
+```
+
+## Quick Example
+
+The example below runs detrended fluctuation analysis on a white-noise series,
+whose scaling exponent is close to `0.5`, and then extends the same data to its
+multifractal spectrum:
 
 ```julia
 using FluctuationAnalysis
 
 series = randn(10_000)
+
 result = dfa(series)
+result.scales              # the window sizes
+result.fluctuations        # the fluctuation function values
+scaling_exponent(result)   # the DFA scaling exponent, ≈ 0.5
 
-result.fit.exponent   # scaling exponent
-result.scales         # window sizes
-result.fluctuations   # fluctuation function values
-```
+# tune the detrending order, scales, and segmentation
+result = dfa(series; order = 2, overlap = false, bidirectional = true)
 
-The detrending order, the scales, and the segmentation can all be configured:
-
-```julia
-result = dfa(series; order=2, scales=logarithmic_scales(length(series)),
-            overlap=false, bidirectional=true)
-```
-
-A custom detrender can be supplied through the `AbstractDetrender` interface:
-
-```julia
-result = dfa(series; detrender=PolynomialDetrender(3))
-```
-
-## Multifractal DFA
-
-`mfdfa` generalizes DFA over a range of moment orders `q`, returning the
-generalized Hurst exponents `h(q)`, the mass exponents `τ(q)`, and the
-singularity spectrum `f(α)`:
-
-```julia
-result = mfdfa(series; q_values=collect(-5.0:0.5:5.0))
-
-result.generalized_hurst      # h(q)
-result.mass_exponents         # τ(q)
-result.singularity_strengths  # α
-result.singularity_spectrum   # f(α)
-scaling_exponent(result)      # h(2), the standard DFA exponent
-```
-
-## Detrending moving average
-
-`dma` is an alternative to `dfa` that removes the local trend with a moving
-average instead of a polynomial fit; `mfdma` is its multifractal version. The
-window position is set by `theta` (`0` backward, `0.5` centered, `1` forward):
-
-```julia
-result = dma(series; theta=0.0)
-scaling_exponent(result)         # DMA scaling exponent
-
-mfdma(series; q_values=collect(-5.0:0.5:5.0))   # multifractal version
-```
-
-## Detrended cross-correlation
-
-`dcca` analyzes two equal-length series with the same segmentation and detrending
-as DFA, returning the cross-correlation exponent, the detrended cross-covariance,
-and the DCCA cross-correlation coefficient `ρ_DCCA(s)`:
-
-```julia
-result = dcca(first_series, second_series)
-
-scaling_exponent(result)   # cross-correlation exponent λ
-result.correlation         # ρ_DCCA(s), in [-1, 1]
-result.covariances         # detrended cross-covariance F²_DCCA(s)
-```
-
-When the two series are identical the analysis reduces to `dfa`.
-
-## Hurst exponent
-
-The Hurst exponent can be estimated either from the DFA scaling exponent (the
-default) or from rescaled range (R/S) analysis:
-
-```julia
-hurst(series)                                # DFA-based estimate
-hurst(series, RescaledRangeHurst())          # rescaled range estimate
-
-result = hurst(series)
-hurst_exponent(result)   # the estimated exponent
+# multifractal spectrum over a range of moment orders q
+mf = mfdfa(series; q_values = collect(-5.0:0.5:5.0))
+mf.generalized_hurst       # h(q)
+mf.singularity_strengths   # α
+mf.singularity_spectrum    # f(α)
 ```
