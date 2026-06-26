@@ -38,9 +38,7 @@ time series. More specifically the software offers:
     `MovingAverage`, fluctuation curves, `loglog_fit`) shared across every method
     and exposed for building custom analyses.
 
-All methods are type-generic (`Float32`, `Float64`, `BigFloat`, …) and accept a
-wide range of array inputs. See the
-[documentation](https://MartinuzziFrancesco.github.io/FluctuationAnalysis.jl/dev/)
+See the [documentation](https://MartinuzziFrancesco.github.io/FluctuationAnalysis.jl/dev/)
 for tutorials and the full API reference.
 
 ## Installation
