@@ -1,3 +1,15 @@
+"""
+    FluctuationAnalysis
+
+Type-generic fluctuation and scaling analysis of time series.
+
+Provides detrended fluctuation analysis ([`dfa`](@ref)), multifractal DFA
+([`mfdfa`](@ref)), detrended cross-correlation analysis ([`dcca`](@ref)),
+detrending moving average ([`dma`](@ref)), multifractal DMA
+([`mfdma`](@ref)), and Hurst exponent estimation ([`hurst`](@ref)), built
+on shared primitives for profiles, scales, segmentation, and log-log
+fitting.
+"""
 module FluctuationAnalysis
 
 using Statistics: mean, std

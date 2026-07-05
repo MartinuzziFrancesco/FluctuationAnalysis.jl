@@ -108,3 +108,31 @@ end
         @test maximum(result.generalized_hurst) - minimum(result.generalized_hurst) > 0.3
     end
 end
+
+@testitem "mfdfa: recovers the analytic binomial spectrum (Kantelhardt 2002)" begin
+    using FluctuationAnalysis
+
+    # Deterministic two-scale binomial measure with weight p; its generalized Hurst
+    # exponent is known in closed form, h(q) = (1 - log2(p^q + (1-p)^q)) / q. MFDFA
+    # recovers it across q (order-1 detrending; order 2 over-fits the small segments,
+    # and the negative-q wing converges only slowly with length, so the tolerance is
+    # looser than the MFDMA-backward test above).
+    p = 0.3
+    measure = [1.0]
+    for _ in 1:15
+        refined = Vector{Float64}(undef, 2 * length(measure))
+        for (index, value) in pairs(measure)
+            refined[2index - 1] = value * p
+            refined[2index] = value * (1 - p)
+        end
+        measure = refined
+    end
+
+    analytic(q) = q == 0 ? -0.5 * (log2(p) + log2(1 - p)) : (1 - log2(p^q + (1 - p)^q)) / q
+    q_values = [-3.0, -1.0, 1.0, 2.0, 3.0]
+    scales = logarithmic_scales(length(measure); minimum_scale = 32, maximum_scale = 4096, scale_count = 16)
+    result = mfdfa(measure; q_values = q_values, order = 1, scales = scales)
+    for (index, q) in enumerate(result.q_values)
+        @test isapprox(result.generalized_hurst[index], analytic(q); atol = 0.07)
+    end
+end

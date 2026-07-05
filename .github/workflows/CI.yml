@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     env:
@@ -29,19 +29,17 @@ jobs:
           - '1.10'
           - '1.11'
           - '1.12'
-          - 'pre'
+          # 'pre' (1.13-rc1) is excluded until ReTestItems supports it:
+          # https://github.com/JuliaTesting/ReTestItems.jl
         os:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
-        arch:
-          - x64
     steps:
       - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.version }}
-          arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v3
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1

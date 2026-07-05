@@ -33,6 +33,50 @@ return the generalized Hurst exponent at `q = 2`.
 scaling_exponent(result::AbstractFluctuationResult) = result.fit.exponent
 
 """
+    show_scaling_summary(stream, result)
+
+One-line summary for a result holding `scales` and a `fit`, shared by the
+`Base.show` methods of the single-exponent result types.
+"""
+function show_scaling_summary(stream::IO, result::AbstractFluctuationResult)
+    print(
+        stream,
+        nameof(typeof(result)),
+        "(exponent=",
+        round(result.fit.exponent; digits = 4),
+        ", scales=",
+        length(result.scales),
+        ", rsquared=",
+        round(result.fit.rsquared; digits = 4),
+        ")",
+    )
+    return nothing
+end
+
+"""
+    show_multifractal_summary(stream, result)
+
+One-line summary for a result holding `q_values` and `scales`, shared by the
+`Base.show` methods of the multifractal result types.
+"""
+function show_multifractal_summary(stream::IO, result::AbstractFluctuationResult)
+    print(
+        stream,
+        nameof(typeof(result)),
+        "(q=",
+        length(result.q_values),
+        " in [",
+        round(minimum(result.q_values); digits = 2),
+        ", ",
+        round(maximum(result.q_values); digits = 2),
+        "], scales=",
+        length(result.scales),
+        ")",
+    )
+    return nothing
+end
+
+"""
     DFAResult
 
 Result of a detrended fluctuation analysis, returned by [`dfa`](@ref).
@@ -54,16 +98,4 @@ result preserves the precision of the input (`Float32`, `Float64`, `BigFloat`, .
     fit
 end
 
-function Base.show(stream::IO, result::DFAResult)
-    print(
-        stream,
-        "DFAResult(exponent=",
-        round(result.fit.exponent; digits = 4),
-        ", scales=",
-        length(result.scales),
-        ", rsquared=",
-        round(result.fit.rsquared; digits = 4),
-        ")",
-    )
-    return nothing
-end
+Base.show(stream::IO, result::DFAResult) = show_scaling_summary(stream, result)

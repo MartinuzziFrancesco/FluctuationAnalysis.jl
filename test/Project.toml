@@ -10,7 +10,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 Aqua = "0.8"
-JET = "0.11"
+JET = "0.9, 0.10, 0.11"
 OffsetArrays = "1"
 Random = "1"
 ReTestItems = "1"

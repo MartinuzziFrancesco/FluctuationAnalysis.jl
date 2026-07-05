@@ -15,6 +15,31 @@ function q_order_fluctuation(variances::AbstractVector{<:Real}, order_q::Real)
 end
 
 """
+    q_order_fluctuations!(row, variances, q_values, scale)
+
+Fill `row` with the q-order fluctuation of the detrended segment `variances`
+for every order in `q_values`. Requires every variance to be positive, since
+the negative-order moments of a zero variance are undefined; `scale` labels
+the error message.
+"""
+function q_order_fluctuations!(
+        row::AbstractVector{<:Real},
+        variances::AbstractVector{<:Real},
+        q_values::AbstractVector{<:Real},
+        scale::Integer,
+    )
+    all(variance -> variance > 0, variances) || throw(
+        ArgumentError(
+            "scale $scale produced a zero-variance segment; multifractal moments are undefined",
+        ),
+    )
+    for (q_index, order_q) in pairs(q_values)
+        row[q_index] = q_order_fluctuation(variances, order_q)
+    end
+    return row
+end
+
+"""
     mfdfa_fluctuations(profile, scales, q_values, detrender; overlap=false, bidirectional=true)
 
 Matrix of q-order fluctuations whose entry `[scale_index, q_index]` is the
@@ -37,14 +62,7 @@ function mfdfa_fluctuations(
         variances = segment_variances(
             profile, scale, detrender; overlap = overlap, bidirectional = bidirectional
         )
-        all(variance -> variance > 0, variances) || throw(
-            ArgumentError(
-                "scale $scale produced a zero-variance segment; multifractal moments are undefined",
-            ),
-        )
-        for (q_index, order_q) in pairs(q_values)
-            fluctuations[scale_index, q_index] = q_order_fluctuation(variances, order_q)
-        end
+        q_order_fluctuations!(view(fluctuations, scale_index, :), variances, q_values, scale)
     end
     return fluctuations
 end
@@ -151,46 +169,7 @@ the data type, so a `Float32` series yields a `Float32` result regardless of the
     singularity_spectrum
 end
 
-function Base.show(stream::IO, result::MFDFAResult)
-    print(
-        stream,
-        "MFDFAResult(q=",
-        length(result.q_values),
-        " in [",
-        round(minimum(result.q_values); digits = 2),
-        ", ",
-        round(maximum(result.q_values); digits = 2),
-        "], scales=",
-        length(result.scales),
-        ")",
-    )
-    return nothing
-end
-
-@doc doc"""
-    scaling_exponent(result::MFDFAResult) -> AbstractFloat
-
-Generalized Hurst exponent at ``q = 2``, the standard DFA scaling exponent.
-
-# Arguments
-
-- `result::MFDFAResult`: a multifractal result whose moment orders include
-  ``q = 2``.
-
-# Returns
-
-- the exponent ``h(2)``, in the result's value type.
-
-# Throws
-
-- `ArgumentError`: if ``q = 2`` is not among the moment orders.
-"""
-function scaling_exponent(result::MFDFAResult)
-    index = findfirst(order_q -> isapprox(order_q, 2), result.q_values)
-    index === nothing &&
-        throw(ArgumentError("scaling_exponent requires q = 2 among the q values"))
-    return result.generalized_hurst[index]
-end
+Base.show(stream::IO, result::MFDFAResult) = show_multifractal_summary(stream, result)
 
 @doc doc"""
     mfdfa(series; kwargs...) -> MFDFAResult

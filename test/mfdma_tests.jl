@@ -80,3 +80,31 @@ end
         @test maximum(result.generalized_hurst) - minimum(result.generalized_hurst) > 0.3
     end
 end
+
+@testitem "mfdma: backward reproduces the binomial spectrum (Gu & Zhou 2010)" begin
+    using FluctuationAnalysis
+
+    # Deterministic two-scale binomial measure with weight p; its generalized
+    # Hurst exponent is known in closed form, h(q) = (1 - log2(p^q + (1-p)^q)) / q.
+    # Backward MFDMA on the raw cumulative sum (the default, eq. (1)) recovers it;
+    # demeaning the profile first would bias the one-sided exponents badly, so this
+    # guards that the default stays demean = false.
+    p = 0.3
+    measure = [1.0]
+    for _ in 1:13
+        refined = Vector{Float64}(undef, 2 * length(measure))
+        for (index, value) in pairs(measure)
+            refined[2index - 1] = value * p
+            refined[2index] = value * (1 - p)
+        end
+        measure = refined
+    end
+
+    analytic(q) = q == 0 ? -0.5 * (log2(p) + log2(1 - p)) : (1 - log2(p^q + (1 - p)^q)) / q
+    q_values = [-3.0, -1.0, 1.0, 2.0, 3.0]
+    scales = [16, 32, 64, 128, 256, 512, 1024]
+    result = mfdma(measure; q_values = q_values, theta = 0.0, scales = scales)
+    for (index, q) in enumerate(result.q_values)
+        @test isapprox(result.generalized_hurst[index], analytic(q); atol = 0.04)
+    end
+end

@@ -171,14 +171,7 @@ function mfdma_fluctuations(
     fluctuations = Matrix{value_type}(undef, length(scales), length(q_values))
     for (scale_index, scale) in pairs(scales)
         variances = moving_average_variances(profile, scale, moving_average_spec)
-        all(variance -> variance > 0, variances) || throw(
-            ArgumentError(
-                "scale $scale produced a zero-variance segment; multifractal moments are undefined",
-            ),
-        )
-        for (q_index, order_q) in pairs(q_values)
-            fluctuations[scale_index, q_index] = q_order_fluctuation(variances, order_q)
-        end
+        q_order_fluctuations!(view(fluctuations, scale_index, :), variances, q_values, scale)
     end
     return fluctuations
 end
