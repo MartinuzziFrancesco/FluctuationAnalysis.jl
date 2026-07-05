@@ -13,9 +13,12 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    # Prerelease Julia is an early-warning signal only; upstream test deps
+    # (e.g. ReTestItems) often lag behind and must not block PRs.
+    continue-on-error: ${{ matrix.version == 'pre' }}
     env:
       # Run the ReTestItems suite in parallel across worker processes.
       RETESTITEMS_NWORKERS: '2'
@@ -34,14 +37,11 @@ jobs:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
-        arch:
-          - x64
     steps:
       - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
-          arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1

@@ -17,7 +17,11 @@
     end
 
     @testset "result structure" begin
-        result = dcca(randn(MersenneTwister(12), 3000), randn(MersenneTwister(13), 3000))
+        rng = MersenneTwister(12)
+        common = cumsum(randn(rng, 3000))
+        first_series = common .+ randn(rng, 3000)
+        second_series = common .+ randn(rng, 3000)
+        result = dcca(first_series, second_series)
         @test result isa DCCAResult
         count = length(result.scales)
         @test length(result.covariances) == count
