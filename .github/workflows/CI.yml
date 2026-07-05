@@ -16,9 +16,6 @@ jobs:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
-    # Prerelease Julia is an early-warning signal only; upstream test deps
-    # (e.g. ReTestItems) often lag behind and must not block PRs.
-    continue-on-error: ${{ matrix.version == 'pre' }}
     env:
       # Run the ReTestItems suite in parallel across worker processes.
       RETESTITEMS_NWORKERS: '2'
@@ -32,7 +29,8 @@ jobs:
           - '1.10'
           - '1.11'
           - '1.12'
-          - 'pre'
+          # 'pre' (1.13-rc1) is excluded until ReTestItems supports it:
+          # https://github.com/JuliaTesting/ReTestItems.jl
         os:
           - ubuntu-latest
           - macOS-latest
