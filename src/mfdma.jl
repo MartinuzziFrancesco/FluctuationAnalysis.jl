@@ -31,31 +31,17 @@ the data type, so a `Float32` series yields a `Float32` result.
     singularity_spectrum
 end
 
-function Base.show(stream::IO, result::MFDMAResult)
-    print(
-        stream,
-        "MFDMAResult(q=",
-        length(result.q_values),
-        " in [",
-        round(minimum(result.q_values); digits = 2),
-        ", ",
-        round(maximum(result.q_values); digits = 2),
-        "], scales=",
-        length(result.scales),
-        ")",
-    )
-    return nothing
-end
+Base.show(stream::IO, result::MFDMAResult) = show_multifractal_summary(stream, result)
 
 @doc doc"""
-    scaling_exponent(result::MFDMAResult) -> AbstractFloat
+    scaling_exponent(result::Union{MFDFAResult, MFDMAResult}) -> AbstractFloat
 
-Generalized Hurst exponent at ``q = 2``, the standard DMA scaling exponent.
+Generalized Hurst exponent at ``q = 2``, the standard DFA/DMA scaling exponent.
 
 # Arguments
 
-- `result::MFDMAResult`: a multifractal result whose moment orders include
-  ``q = 2``.
+- `result::Union{MFDFAResult, MFDMAResult}`: a multifractal result whose moment
+  orders include ``q = 2``.
 
 # Returns
 
@@ -65,7 +51,7 @@ Generalized Hurst exponent at ``q = 2``, the standard DMA scaling exponent.
 
 - `ArgumentError`: if ``q = 2`` is not among the moment orders.
 """
-function scaling_exponent(result::MFDMAResult)
+function scaling_exponent(result::Union{MFDFAResult, MFDMAResult})
     index = findfirst(order_q -> isapprox(order_q, 2), result.q_values)
     index === nothing &&
         throw(ArgumentError("scaling_exponent requires q = 2 among the q values"))
@@ -100,7 +86,10 @@ of each gives a generalized Hurst exponent ``h(q)``, from which the mass exponen
   specification; overrides `theta` when given.
 - `scales::AbstractVector{<:Integer} = logarithmic_scales(length(series))`:
   window sizes to evaluate.
-- `demean::Bool = true`: subtract the mean before integrating the profile.
+- `demean::Bool = false`: subtract the mean before integrating the profile. Gu &
+  Zhou (2010) eq. (1) uses the raw cumulative sum, so this defaults to `false`;
+  demeaning leaves an offset under one-sided (`theta = 0` or `1`) moving averages
+  and biases their exponents, so it should stay `false` for those.
 - `fitrange::Union{Nothing,Tuple{<:Integer,<:Integer}} = nothing`:
   `(lower, upper)` scale bounds restricting each log-log fit.
 
@@ -120,7 +109,7 @@ function mfdma(
         theta::Real = 0.0,
         moving_average::MovingAverage = MovingAverage(theta),
         scales::AbstractVector{<:Integer} = logarithmic_scales(length(series)),
-        demean::Bool = true,
+        demean::Bool = false,
         fitrange::Union{Nothing, Tuple{<:Integer, <:Integer}} = nothing,
     )
     length(series) >= 8 || throw(ArgumentError("series is too short for MFDMA"))

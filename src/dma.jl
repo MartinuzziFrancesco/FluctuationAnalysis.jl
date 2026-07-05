@@ -20,19 +20,7 @@ the input precision.
     fit
 end
 
-function Base.show(stream::IO, result::DMAResult)
-    print(
-        stream,
-        "DMAResult(exponent=",
-        round(result.fit.exponent; digits = 4),
-        ", scales=",
-        length(result.scales),
-        ", rsquared=",
-        round(result.fit.rsquared; digits = 4),
-        ")",
-    )
-    return nothing
-end
+Base.show(stream::IO, result::DMAResult) = show_scaling_summary(stream, result)
 
 """
     dma(series; kwargs...) -> DMAResult
@@ -57,7 +45,10 @@ Its slope is the DMA scaling exponent, equal to [`mfdma`](@ref) at `q = 2`.
   specification; overrides `theta` when given.
 - `scales::AbstractVector{<:Integer} = logarithmic_scales(length(series))`:
   window sizes to evaluate.
-- `demean::Bool = true`: subtract the mean before integrating the profile.
+- `demean::Bool = false`: subtract the mean before integrating the profile. Gu &
+  Zhou (2010) eq. (1) uses the raw cumulative sum, so this defaults to `false`;
+  demeaning leaves an offset under one-sided (`theta = 0` or `1`) moving averages
+  and biases their exponents, so it should stay `false` for those.
 - `fitrange::Union{Nothing,Tuple{<:Integer,<:Integer}} = nothing`:
   `(lower, upper)` scale bounds restricting the log-log fit.
 
@@ -75,7 +66,7 @@ function dma(
         theta::Real = 0.0,
         moving_average::MovingAverage = MovingAverage(theta),
         scales::AbstractVector{<:Integer} = logarithmic_scales(length(series)),
-        demean::Bool = true,
+        demean::Bool = false,
         fitrange::Union{Nothing, Tuple{<:Integer, <:Integer}} = nothing,
     )
     length(series) >= 8 || throw(ArgumentError("series is too short for DMA"))

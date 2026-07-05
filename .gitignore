@@ -4,3 +4,9 @@
 /Manifest*.toml
 /docs/Manifest*.toml
 /docs/build/
+
+/CLAUDE.md
+
+# paper materials (kept out of the repo for now)
+/paper/
+/draft/

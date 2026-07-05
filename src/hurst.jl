@@ -74,19 +74,7 @@ input precision.
     fit
 end
 
-function Base.show(stream::IO, result::HurstResult)
-    print(
-        stream,
-        "HurstResult(exponent=",
-        round(result.fit.exponent; digits = 4),
-        ", scales=",
-        length(result.scales),
-        ", rsquared=",
-        round(result.fit.rsquared; digits = 4),
-        ")",
-    )
-    return nothing
-end
+Base.show(stream::IO, result::HurstResult) = show_scaling_summary(stream, result)
 
 """
     rescaled_range(segment)
