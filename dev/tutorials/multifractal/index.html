@@ -6,41 +6,41 @@ series = randn(MersenneTwister(1), 30_000)
 result = mfdfa(series; q_values=collect(-4.0:1.0:4.0))
 result</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">MFDFAResult(q=9 in [-4.0, 4.0], scales=20)</code></pre><p>A <a href="../../api/#FluctuationAnalysis.MFDFAResult"><code>MFDFAResult</code></a> exposes the moment-resolved quantities directly:</p><pre><code class="language-julia hljs">result.generalized_hurst      # h(q)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">9-element Vector{Float64}:
  0.6085794973381166
- 0.5836766900161725
+ 0.5836766900161726
  0.5544133720528884
  0.534277543841118
  0.5271892581271741
  0.5258175297722529
  0.5264264326484701
  0.5272224258475358
- 0.5273920773741984</code></pre><pre><code class="language-julia hljs">result.mass_exponents         # τ(q) = q·h(q) − 1</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">9-element Vector{Float64}:
+ 0.5273920773741985</code></pre><pre><code class="language-julia hljs">result.mass_exponents         # τ(q) = q·h(q) − 1</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">9-element Vector{Float64}:
  -3.4343179893524662
- -2.7510300700485173
+ -2.7510300700485177
  -2.1088267441057766
  -1.534277543841118
  -1.0
  -0.47418247022774707
   0.05285286529694022
   0.5816672775426073
-  1.1095683094967934</code></pre><pre><code class="language-julia hljs">result.singularity_strengths  # α</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">9-element Vector{Float64}:
- 0.6832879193039489
+  1.1095683094967939</code></pre><pre><code class="language-julia hljs">result.singularity_strengths  # α</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">9-element Vector{Float64}:
+ 0.6832879193039485
  0.6627456226233448
- 0.6083762631036996
+ 0.6083762631036999
  0.5544133720528883
  0.5300475368066855
  0.5264264326484701
  0.5279248738851772
- 0.5283577220999266
- 0.5279010319541861</code></pre><pre><code class="language-julia hljs">result.singularity_spectrum   # f(α)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">9-element Vector{Float64}:
- 0.7011663121366705
- 0.7627932021784829
- 0.8920742178983774
+ 0.5283577220999268
+ 0.5279010319541866</code></pre><pre><code class="language-julia hljs">result.singularity_spectrum   # f(α)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">9-element Vector{Float64}:
+ 0.7011663121366722
+ 0.7627932021784833
+ 0.8920742178983769
  0.9798641717882297
  1.0
  1.000608902876217
  1.0029968824734141
- 1.0034058887571724
- 1.0020358183199511</code></pre><p>At <span>$q = 2$</span> the analysis coincides with <a href="../../api/#FluctuationAnalysis.dfa"><code>dfa</code></a>, so <a href="../../api/#FluctuationAnalysis.scaling_exponent"><code>scaling_exponent</code></a> returns <span>$h(2)$</span>:</p><pre><code class="language-julia hljs">scaling_exponent(result)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.5264264326484701</code></pre><h2 id="Monofractal-versus-multifractal"><a class="docs-heading-anchor" href="#Monofractal-versus-multifractal">Monofractal versus multifractal</a><a id="Monofractal-versus-multifractal-1"></a><a class="docs-heading-anchor-permalink" href="#Monofractal-versus-multifractal" title="Permalink"></a></h2><p>For white noise the generalized Hurst exponents are nearly flat — a narrow spread of <span>$h(q)$</span> is the signature of a monofractal signal:</p><pre><code class="language-julia hljs">maximum(result.generalized_hurst) - minimum(result.generalized_hurst)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.08276196756586363</code></pre><p>A multiplicative binomial cascade, by contrast, is strongly multifractal. Here the spread of <span>$h(q)$</span> is wide:</p><pre><code class="language-julia hljs">function binomial_cascade(levels, multiplier, rng)
+ 1.0034058887571733
+ 1.0020358183199525</code></pre><p>At <span>$q = 2$</span> the analysis coincides with <a href="../../api/#FluctuationAnalysis.dfa"><code>dfa</code></a>, so <a href="../../api/#FluctuationAnalysis.scaling_exponent"><code>scaling_exponent</code></a> returns <span>$h(2)$</span>:</p><pre><code class="language-julia hljs">scaling_exponent(result)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.5264264326484701</code></pre><h2 id="Monofractal-versus-multifractal"><a class="docs-heading-anchor" href="#Monofractal-versus-multifractal">Monofractal versus multifractal</a><a id="Monofractal-versus-multifractal-1"></a><a class="docs-heading-anchor-permalink" href="#Monofractal-versus-multifractal" title="Permalink"></a></h2><p>For white noise the generalized Hurst exponents are nearly flat — a narrow spread of <span>$h(q)$</span> is the signature of a monofractal signal:</p><pre><code class="language-julia hljs">maximum(result.generalized_hurst) - minimum(result.generalized_hurst)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.08276196756586363</code></pre><p>A multiplicative binomial cascade, by contrast, is strongly multifractal. Here the spread of <span>$h(q)$</span> is wide:</p><pre><code class="language-julia hljs">function binomial_cascade(levels, multiplier, rng)
     measure = [1.0]
     for _ in 1:levels
         refined = Vector{Float64}(undef, 2 * length(measure))
@@ -56,4 +56,4 @@ end
 
 cascade = binomial_cascade(14, 0.3, MersenneTwister(7))
 cascade_result = mfdfa(cascade; q_values=collect(-4.0:0.5:4.0))
-maximum(cascade_result.generalized_hurst) - minimum(cascade_result.generalized_hurst)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.8211198443075816</code></pre><p>The width of the singularity spectrum <span>$f(\alpha)$</span> measures the strength of the multifractality:</p><pre><code class="language-julia hljs">maximum(cascade_result.singularity_strengths) - minimum(cascade_result.singularity_strengths)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1.2226885678559283</code></pre><h2 id="Multifractal-DMA"><a class="docs-heading-anchor" href="#Multifractal-DMA">Multifractal DMA</a><a id="Multifractal-DMA-1"></a><a class="docs-heading-anchor-permalink" href="#Multifractal-DMA" title="Permalink"></a></h2><p><a href="../../api/#FluctuationAnalysis.mfdma"><code>mfdma</code></a> takes the same <code>q_values</code> and returns an <a href="../../api/#FluctuationAnalysis.MFDMAResult"><code>MFDMAResult</code></a> with the same fields, using a moving-average detrending whose position is set by <code>theta</code>:</p><pre><code class="language-julia hljs">mfdma(cascade; q_values=collect(-4.0:0.5:4.0), theta=0.0) |&gt; scaling_exponent</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.9298526136281968</code></pre><p>```</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../moving_average/">« Detrending moving average</a><a class="docs-footer-nextpage" href="../cross_correlation/">Cross-correlation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Sunday 5 July 2026 18:36">Sunday 5 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+maximum(cascade_result.generalized_hurst) - minimum(cascade_result.generalized_hurst)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.8211198443075819</code></pre><p>The width of the singularity spectrum <span>$f(\alpha)$</span> measures the strength of the multifractality:</p><pre><code class="language-julia hljs">maximum(cascade_result.singularity_strengths) - minimum(cascade_result.singularity_strengths)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1.2226885678559327</code></pre><h2 id="Multifractal-DMA"><a class="docs-heading-anchor" href="#Multifractal-DMA">Multifractal DMA</a><a id="Multifractal-DMA-1"></a><a class="docs-heading-anchor-permalink" href="#Multifractal-DMA" title="Permalink"></a></h2><p><a href="../../api/#FluctuationAnalysis.mfdma"><code>mfdma</code></a> takes the same <code>q_values</code> and returns an <a href="../../api/#FluctuationAnalysis.MFDMAResult"><code>MFDMAResult</code></a> with the same fields, using a moving-average detrending whose position is set by <code>theta</code>:</p><pre><code class="language-julia hljs">mfdma(cascade; q_values=collect(-4.0:0.5:4.0), theta=0.0) |&gt; scaling_exponent</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.9298526136281968</code></pre><p>```</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../moving_average/">« Detrending moving average</a><a class="docs-footer-nextpage" href="../cross_correlation/">Cross-correlation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Sunday 19 July 2026 16:47">Sunday 19 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
