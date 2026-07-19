@@ -1,20 +1,9 @@
-"""
-    segment_variance(detrender, segment)
-
-Mean squared residual of `segment` after detrending.
-"""
-function segment_variance(detrender::AbstractDetrender, segment::AbstractVector{<:Real})
+function __segment_variance(detrender::AbstractDetrender, segment::AbstractVector{<:Real})
     residuals = detrend(detrender, segment)
     return mean(abs2, residuals)
 end
 
-"""
-    segment_covariance(detrender, first_segment, second_segment)
-
-Mean product of the residuals of two segments after detrending each. With equal
-segments this reduces to [`segment_variance`](@ref).
-"""
-function segment_covariance(
+function __segment_covariance(
         detrender::AbstractDetrender,
         first_segment::AbstractVector{<:Real},
         second_segment::AbstractVector{<:Real},
@@ -24,29 +13,18 @@ function segment_covariance(
     return mean(first_residuals .* second_residuals)
 end
 
-"""
-    segment_variances(profile, scale, detrender; overlap=false, bidirectional=true)
-
-Detrended variance of every segment of `profile` at a single `scale`.
-"""
-function segment_variances(
+function __segment_variances(
         profile::AbstractVector{<:Real},
         scale::Integer,
         detrender::AbstractDetrender;
         overlap::Bool = false,
         bidirectional::Bool = true,
     )
-    segments = segment_views(profile, scale; overlap = overlap, bidirectional = bidirectional)
-    return map(segment -> segment_variance(detrender, segment), segments)
+    segments = __segment_views(profile, scale; overlap = overlap, bidirectional = bidirectional)
+    return map(Base.Fix1(__segment_variance, detrender), segments)
 end
 
-"""
-    segment_covariances(first_profile, second_profile, scale, detrender; overlap=false, bidirectional=true)
-
-Detrended covariance of every aligned segment pair of two profiles at a single
-`scale`.
-"""
-function segment_covariances(
+function __segment_covariances(
         first_profile::AbstractVector{<:Real},
         second_profile::AbstractVector{<:Real},
         scale::Integer,
@@ -54,57 +32,48 @@ function segment_covariances(
         overlap::Bool = false,
         bidirectional::Bool = true,
     )
-    first_segments = segment_views(
+    first_segments = __segment_views(
         first_profile, scale; overlap = overlap, bidirectional = bidirectional
     )
-    second_segments = segment_views(
+    second_segments = __segment_views(
         second_profile, scale; overlap = overlap, bidirectional = bidirectional
     )
-    return map(
-        (first_segment, second_segment) ->
-        segment_covariance(detrender, first_segment, second_segment),
-        first_segments,
-        second_segments,
-    )
+    value_type = promote_type(float(eltype(first_profile)), float(eltype(second_profile)))
+    covariances = zeros(value_type, length(first_segments))
+    for index in eachindex(first_segments, second_segments)
+        covariances[index] = __segment_covariance(
+            detrender, first_segments[index], second_segments[index]
+        )
+    end
+    return covariances
 end
 
-"""
-    fluctuation_at_scale(profile, scale, detrender; overlap=false, bidirectional=true)
-
-Root-mean-square fluctuation of `profile` at a single `scale`, computed as the
-square root of the mean detrended segment variance.
-"""
-function fluctuation_at_scale(
+function __fluctuation_at_scale(
         profile::AbstractVector{<:Real},
         scale::Integer,
         detrender::AbstractDetrender;
         overlap::Bool = false,
         bidirectional::Bool = true,
     )
-    variances = segment_variances(
+    variances = __segment_variances(
         profile, scale, detrender; overlap = overlap, bidirectional = bidirectional
     )
     return sqrt(mean(variances))
 end
 
-"""
-    fluctuation_curve(profile, scales, detrender; overlap=false, bidirectional=true)
-
-Fluctuation function evaluated over every entry of `scales`.
-"""
-function fluctuation_curve(
+function __fluctuation_curve(
         profile::AbstractVector{<:Real},
         scales::AbstractVector{<:Integer},
         detrender::AbstractDetrender;
         overlap::Bool = false,
         bidirectional::Bool = true,
     )
-    smallest_allowed = minimum_segment_length(detrender)
+    smallest_allowed = __minimum_segment_length(detrender)
     fluctuations = similar(profile, float(eltype(profile)), length(scales))
     for (index, scale) in pairs(scales)
         scale >= smallest_allowed ||
             throw(ArgumentError("scale $scale is too small for the chosen detrender"))
-        fluctuations[index] = fluctuation_at_scale(
+        fluctuations[index] = __fluctuation_at_scale(
             profile, scale, detrender; overlap = overlap, bidirectional = bidirectional
         )
     end

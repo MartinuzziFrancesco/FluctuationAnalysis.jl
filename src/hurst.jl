@@ -7,14 +7,7 @@ Each estimator defines how a scale-dependent statistic is built from a series;
 the Hurst exponent is then the slope of that statistic against scale in log-log
 coordinates.
 
-# Interface
-
-A concrete subtype `E <: AbstractHurstEstimator` must implement
-`hurst_statistic_curve(estimator::E, series, scales)`, returning the statistic at
-each scale.
-
-See also [`DetrendedFluctuationHurst`](@ref), [`RescaledRangeHurst`](@ref), and
-[`hurst_statistic_curve`](@ref).
+See also [`DetrendedFluctuationHurst`](@ref) and [`RescaledRangeHurst`](@ref).
 """
 abstract type AbstractHurstEstimator end
 
@@ -50,7 +43,7 @@ Estimate the Hurst exponent from rescaled range (R/S) analysis. The rescaled
 range averaged over non-overlapping segments grows with segment length as a power
 law whose exponent is the Hurst exponent.
 """
-struct RescaledRangeHurst <: AbstractHurstEstimator end
+@concrete struct RescaledRangeHurst <: AbstractHurstEstimator end
 
 """
     HurstResult
@@ -74,16 +67,9 @@ input precision.
     fit
 end
 
-Base.show(stream::IO, result::HurstResult) = show_scaling_summary(stream, result)
+Base.show(stream::IO, result::HurstResult) = __show_scaling_summary(stream, result)
 
-"""
-    rescaled_range(segment)
-
-Rescaled range (R/S) of a `segment`: the range of its cumulative mean-removed
-deviations divided by its population standard deviation. A segment with zero
-spread has a rescaled range of zero.
-"""
-function rescaled_range(segment::AbstractVector{<:Real})
+function __rescaled_range(segment::AbstractVector{<:Real})
     segment_mean = mean(segment)
     cumulative_deviation = cumsum(segment .- segment_mean)
     range_width = maximum(cumulative_deviation) - minimum(cumulative_deviation)
@@ -92,52 +78,27 @@ function rescaled_range(segment::AbstractVector{<:Real})
     return range_width / spread
 end
 
-"""
-    mean_rescaled_range(series, scale)
-
-Mean rescaled range over the non-overlapping segments of `series` of length
-`scale`.
-"""
-function mean_rescaled_range(series::AbstractVector{<:Real}, scale::Integer)
-    segments = segment_views(series, scale; overlap = false, bidirectional = false)
-    return mean(rescaled_range, segments)
+function __mean_rescaled_range(series::AbstractVector{<:Real}, scale::Integer)
+    segments = __segment_views(series, scale; overlap = false, bidirectional = false)
+    return mean(__rescaled_range, segments)
 end
 
-"""
-    hurst_statistic_curve(estimator::AbstractHurstEstimator, series, scales) -> Vector{<:AbstractFloat}
-
-Scale-dependent statistic whose log-log slope estimates the Hurst exponent.
-
-Part of the [`AbstractHurstEstimator`](@ref) interface, with methods for
-[`DetrendedFluctuationHurst`](@ref) (the DFA fluctuation curve) and
-[`RescaledRangeHurst`](@ref) (the mean rescaled range).
-
-# Arguments
-
-- `estimator::AbstractHurstEstimator`: the estimator selecting the statistic.
-- `series::AbstractVector{<:Real}`: the time series.
-- `scales::AbstractVector{<:Integer}`: segment lengths to evaluate.
-
-# Returns
-
-- `Vector{<:AbstractFloat}`: the statistic at each scale.
-"""
-function hurst_statistic_curve(
+function __hurst_statistic_curve(
         estimator::DetrendedFluctuationHurst,
         series::AbstractVector{<:Real},
         scales::AbstractVector{<:Integer},
     )
     profile = integrated_profile(series; demean = true)
-    return fluctuation_curve(profile, scales, estimator.detrender)
+    return __fluctuation_curve(profile, scales, estimator.detrender)
 end
 
-function hurst_statistic_curve(
+function __hurst_statistic_curve(
         ::RescaledRangeHurst, series::AbstractVector{<:Real}, scales::AbstractVector{<:Integer}
     )
     values = float.(collect(series))
     statistic = similar(values, length(scales))
     for (index, scale) in pairs(scales)
-        statistic[index] = mean_rescaled_range(values, scale)
+        statistic[index] = __mean_rescaled_range(values, scale)
     end
     return statistic
 end
@@ -182,7 +143,7 @@ function hurst(
     )
     length(series) >= 8 || throw(ArgumentError("series is too short for Hurst estimation"))
     scales = Int.(collect(scales))
-    statistic = hurst_statistic_curve(estimator, series, scales)
+    statistic = __hurst_statistic_curve(estimator, series, scales)
     fit = loglog_fit(scales, statistic; fitrange = fitrange)
     return HurstResult(estimator, scales, statistic, fit)
 end

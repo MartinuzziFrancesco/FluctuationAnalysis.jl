@@ -7,13 +7,13 @@
         scales = logarithmic_scales(5000; minimum_scale = 8, maximum_scale = 500)
         result = dcca(series, series; scales = scales)
         reference = dfa(series; scales = scales)
-        @test isapprox(result.cross_fluctuations, reference.fluctuations; atol = 1.0e-10)
-        @test isapprox(scaling_exponent(result), reference.fit.exponent; atol = 1.0e-10)
+        @test result.cross_fluctuations == reference.fluctuations
+        @test scaling_exponent(result) == reference.fit.exponent
     end
 
     @testset "identical series are perfectly correlated" begin
         result = dcca(randn(MersenneTwister(6), 4000), randn(MersenneTwister(6), 4000))
-        @test all(value -> isapprox(value, 1.0; atol = 1.0e-10), result.correlation)
+        @test all(==(1.0), result.correlation)
     end
 
     @testset "result structure" begin
@@ -45,7 +45,7 @@ end
 
     @testset "correlation stays within bounds" begin
         result = dcca(randn(MersenneTwister(8), 6000), randn(MersenneTwister(81), 6000))
-        @test all(value -> -1.0 - 1.0e-8 <= value <= 1.0 + 1.0e-8, result.correlation)
+        @test all(value -> -1.0 <= value <= 1.0, result.correlation)
     end
 
     @testset "coupled series are strongly positively correlated" begin

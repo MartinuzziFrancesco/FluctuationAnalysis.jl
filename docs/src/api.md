@@ -67,7 +67,6 @@ AbstractFluctuationResult
 AbstractDetrender
 PolynomialDetrender
 detrend
-minimum_segment_length
 ```
 
 ## Hurst estimator interface
@@ -76,6 +75,4 @@ minimum_segment_length
 AbstractHurstEstimator
 DetrendedFluctuationHurst
 RescaledRangeHurst
-hurst_statistic_curve
-```
 ```

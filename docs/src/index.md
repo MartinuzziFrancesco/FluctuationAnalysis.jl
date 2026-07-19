@@ -14,10 +14,10 @@ estimation, on top of a small set of reusable building blocks.
 
 | Function          | Method                                              | Primary reference                                                              |
 |:----------------- |:--------------------------------------------------- |:----------------------------------------------------------------------------- |
-| [`dfa`](@ref)     | Detrended fluctuation analysis (DFA)                | [Peng et al. (1994)](https://doi.org/10.1103/PhysRevE.49.1685)                 |
+| [`dfa`](@ref)     | Detrended fluctuation analysis (DFA)                | [Peng et al. (1994)](https://doi.org/10.1103/PhysRevE.49.1685); bidirectional segmentation from [Kantelhardt et al. (2002)](https://doi.org/10.1016/S0378-4371(02)01383-3) |
 | [`mfdfa`](@ref)   | Multifractal DFA                                    | [Kantelhardt et al. (2002)](https://doi.org/10.1016/S0378-4371(02)01383-3)     |
-| [`dcca`](@ref)    | Detrended cross-correlation analysis (DCCA)         | [Podobnik & Stanley (2008)](https://doi.org/10.1103/PhysRevLett.100.084102)    |
-| [`dma`](@ref)     | Detrending moving average (DMA)                     | [Alessio et al. (2002)](https://doi.org/10.1140/epjb/e20020150)                |
+| [`dcca`](@ref)    | Detrended cross-correlation analysis (DCCA)         | [Podobnik & Stanley (2008)](https://doi.org/10.1103/PhysRevLett.100.084102); coefficient from [Zebende (2011)](https://doi.org/10.1016/j.physa.2010.10.022) |
+| [`dma`](@ref)     | Detrending moving average (DMA), the ``q=2`` MFDMA case | [Gu & Zhou (2010)](https://doi.org/10.1103/PhysRevE.82.011136)              |
 | [`mfdma`](@ref)   | Multifractal DMA                                    | [Gu & Zhou (2010)](https://doi.org/10.1103/PhysRevE.82.011136)                 |
 | [`hurst`](@ref)   | Hurst exponent (DFA-based or rescaled range)        | [Hurst (1951)](https://doi.org/10.1061/TACEAT.0006518); [Peng et al. (1994)](https://doi.org/10.1103/PhysRevE.49.1685) |
 
@@ -51,4 +51,3 @@ scaling_exponent(result)
 - For the moment-resolved multifractal spectrum, see
   [Multifractal analysis](@ref).
 - The [API reference](@ref) lists every exported function and type.
-```

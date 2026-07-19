@@ -51,7 +51,7 @@ function dfa(
 
     scales = Int.(collect(scales))
     profile = integrated_profile(series; demean = demean)
-    fluctuations = fluctuation_curve(
+    fluctuations = __fluctuation_curve(
         profile, scales, detrender; overlap = overlap, bidirectional = bidirectional
     )
     fit = loglog_fit(scales, fluctuations; fitrange = fitrange)

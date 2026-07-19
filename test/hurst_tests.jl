@@ -3,16 +3,16 @@
     using Random
 
     @testset "rescaled range of a known segment" begin
-        @test FluctuationAnalysis.rescaled_range([1.0, 2.0, 1.0, 2.0]) == 1.0
+        @test FluctuationAnalysis.__rescaled_range([1.0, 2.0, 1.0, 2.0]) == 1.0
     end
 
     @testset "rescaled range of a constant segment is zero" begin
-        @test FluctuationAnalysis.rescaled_range([3.0, 3.0, 3.0]) == 0.0
+        @test FluctuationAnalysis.__rescaled_range([3.0, 3.0, 3.0]) == 0.0
     end
 
     @testset "mean rescaled range averages over segments" begin
         series = [1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.0]
-        @test FluctuationAnalysis.mean_rescaled_range(series, 4) == 1.0
+        @test FluctuationAnalysis.__mean_rescaled_range(series, 4) == 1.0
     end
 
     @testset "result structure and default estimator" begin

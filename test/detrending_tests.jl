@@ -9,13 +9,13 @@
     end
 
     @testset "minimum segment length" begin
-        @test FluctuationAnalysis.minimum_segment_length(PolynomialDetrender(0)) == 2
-        @test FluctuationAnalysis.minimum_segment_length(PolynomialDetrender(1)) == 3
-        @test FluctuationAnalysis.minimum_segment_length(PolynomialDetrender(3)) == 5
+        @test FluctuationAnalysis.__minimum_segment_length(PolynomialDetrender(0)) == 2
+        @test FluctuationAnalysis.__minimum_segment_length(PolynomialDetrender(1)) == 3
+        @test FluctuationAnalysis.__minimum_segment_length(PolynomialDetrender(3)) == 5
     end
 
     @testset "design matrix" begin
-        design = FluctuationAnalysis.polynomial_design_matrix(5, 2)
+        design = FluctuationAnalysis.__polynomial_design_matrix(5, 2)
         @test size(design) == (5, 3)
         @test design[:, 1] == ones(5)
         @test design[1, 2] == 0.0

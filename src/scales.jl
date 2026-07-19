@@ -49,7 +49,7 @@ function logarithmic_scales(
     upper_exponent = log(maximum_scale) / log(base)
     exponents = range(lower_exponent, upper_exponent; length = scale_count)
     scales = unique(round.(Int, base .^ exponents))
-    scales = filter(scale -> minimum_scale <= scale <= maximum_scale, scales)
+    scales = [scale for scale in scales if minimum_scale <= scale <= maximum_scale]
     length(scales) >= 2 || throw(ArgumentError("not enough distinct scales generated"))
     return scales
 end

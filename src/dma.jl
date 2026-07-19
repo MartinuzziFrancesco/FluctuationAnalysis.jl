@@ -20,7 +20,7 @@ the input precision.
     fit
 end
 
-Base.show(stream::IO, result::DMAResult) = show_scaling_summary(stream, result)
+Base.show(stream::IO, result::DMAResult) = __show_scaling_summary(stream, result)
 
 """
     dma(series; kwargs...) -> DMAResult
@@ -73,7 +73,7 @@ function dma(
 
     scales = Int.(collect(scales))
     profile = integrated_profile(series; demean = demean)
-    fluctuations = dma_fluctuation_curve(profile, scales, moving_average)
+    fluctuations = __dma_fluctuation_curve(profile, scales, moving_average)
     fit = loglog_fit(scales, fluctuations; fitrange = fitrange)
 
     return DMAResult(scales, fluctuations, moving_average, fit)

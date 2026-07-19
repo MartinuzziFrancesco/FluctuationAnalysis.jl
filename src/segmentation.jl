@@ -1,15 +1,4 @@
-"""
-    segment_views(profile, scale; overlap=false, bidirectional=true)
-
-Split `profile` into views of length `scale`.
-
-With `overlap=false` the profile is divided into adjacent non-overlapping
-segments; when `bidirectional=true` a second pass starting from the end of the
-profile is added so that the trailing samples left over by integer division are
-also covered. With `overlap=true` a sliding window of unit step is used and
-`bidirectional` is ignored.
-"""
-function segment_views(
+function __segment_views(
         profile::AbstractVector, scale::Integer; overlap::Bool = false, bidirectional::Bool = true
     )
     profile_length = length(profile)

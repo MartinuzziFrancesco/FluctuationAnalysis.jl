@@ -14,11 +14,8 @@ A concrete subtype `D <: AbstractDetrender` must implement:
 
 - `detrend(detrender::D, segment)`: return the residuals of `segment` after
   removing the estimated trend.
-- `minimum_segment_length(detrender::D)`: the smallest segment length for which
-  the detrender produces a meaningful residual.
 
-See also [`PolynomialDetrender`](@ref), [`detrend`](@ref), and
-[`minimum_segment_length`](@ref).
+See also [`PolynomialDetrender`](@ref) and [`detrend`](@ref).
 """
 abstract type AbstractDetrender end
 
@@ -47,37 +44,13 @@ struct PolynomialDetrender <: AbstractDetrender
     end
 end
 
-"""
-    minimum_segment_length(detrender::AbstractDetrender) -> Int
+__minimum_segment_length(detrender::PolynomialDetrender) = detrender.order + 2
 
-Smallest segment length for which `detrender` produces a meaningful residual.
-
-Part of the [`AbstractDetrender`](@ref) interface. For a [`PolynomialDetrender`](@ref)
-of degree `order` this is `order + 2`, the smallest length that leaves at least
-one degree of freedom after the fit.
-
-# Arguments
-
-- `detrender::AbstractDetrender`: the detrender to query.
-
-# Returns
-
-- `Int`: the minimum admissible segment length.
-"""
-minimum_segment_length(detrender::PolynomialDetrender) = detrender.order + 2
-
-"""
-    polynomial_design_matrix(segment_length, order, ::Type{T} = Float64)
-
-Build the Vandermonde design matrix for a polynomial fit of the given `order`,
-using positions normalised to the unit interval for numerical conditioning. The
-element type `T` matches the data being detrended so the fit avoids conversions.
-"""
-function polynomial_design_matrix(
+function __polynomial_design_matrix(
         segment_length::Integer, order::Integer, ::Type{T} = Float64
     ) where {T <: AbstractFloat}
     positions = range(zero(T), one(T); length = segment_length)
-    design = Matrix{T}(undef, segment_length, order + 1)
+    design = zeros(T, segment_length, order + 1)
     for power in 0:order
         design[:, power + 1] = positions .^ power
     end
@@ -112,7 +85,7 @@ function detrend(detrender::PolynomialDetrender, segment::AbstractVector{<:Real}
     detrender.order < segment_length ||
         throw(ArgumentError("segment length must exceed the detrending order"))
     values = float.(collect(segment))
-    design = polynomial_design_matrix(segment_length, detrender.order, eltype(values))
+    design = __polynomial_design_matrix(segment_length, detrender.order, eltype(values))
     coefficients = design \ values
     return values .- design * coefficients
 end

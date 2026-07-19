@@ -32,13 +32,7 @@ return the generalized Hurst exponent at `q = 2`.
 """
 scaling_exponent(result::AbstractFluctuationResult) = result.fit.exponent
 
-"""
-    show_scaling_summary(stream, result)
-
-One-line summary for a result holding `scales` and a `fit`, shared by the
-`Base.show` methods of the single-exponent result types.
-"""
-function show_scaling_summary(stream::IO, result::AbstractFluctuationResult)
+function __show_scaling_summary(stream::IO, result::AbstractFluctuationResult)
     print(
         stream,
         nameof(typeof(result)),
@@ -53,13 +47,7 @@ function show_scaling_summary(stream::IO, result::AbstractFluctuationResult)
     return nothing
 end
 
-"""
-    show_multifractal_summary(stream, result)
-
-One-line summary for a result holding `q_values` and `scales`, shared by the
-`Base.show` methods of the multifractal result types.
-"""
-function show_multifractal_summary(stream::IO, result::AbstractFluctuationResult)
+function __show_multifractal_summary(stream::IO, result::AbstractFluctuationResult)
     print(
         stream,
         nameof(typeof(result)),
@@ -98,4 +86,4 @@ result preserves the precision of the input (`Float32`, `Float64`, `BigFloat`, .
     fit
 end
 
-Base.show(stream::IO, result::DFAResult) = show_scaling_summary(stream, result)
+Base.show(stream::IO, result::DFAResult) = __show_scaling_summary(stream, result)

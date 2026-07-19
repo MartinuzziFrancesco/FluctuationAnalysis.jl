@@ -23,13 +23,19 @@ julia --startup-file=no --project=docs docs/make.jl
 - **Test each function as you add it** — never batch testing to the end.
 - Run the test suite **and** the Runic check before considering a change done.
 - Snapshot a working state before big changes; commit each logical step.
-- Reuse existing primitives (`integrated_profile`, `logarithmic_scales`, `segment_views`, `segment_variance(s)`, `segment_covariance(s)`, `fluctuation_curve`, `q_order_fluctuation`, `loglog_fit`, `scale_selection`) instead of duplicating logic. One concern per file.
+- Reuse existing primitives (`integrated_profile`, `logarithmic_scales`,
+  `__segment_views`, `__segment_variance(s)`, `__segment_covariance(s)`,
+  `__fluctuation_curve`, `__q_order_fluctuation`, `loglog_fit`,
+  `__scale_selection`) instead of duplicating logic. One concern per file.
 - Extend via the existing seams: subtype `AbstractDetrender`, `AbstractHurstEstimator`, or `AbstractFluctuationResult`.
 
 ## Code rules
 
 - **Follow the [SciML Style Guide](https://github.com/SciML/SciMLStyle).** Format with **Runic only** (never Blue/JuliaFormatter).
 - **No single-letter or symbol variable names** — use `series`, `profile`, `scale`, `exponent`, never `x`, `s`, `α`.
+- **Package-private helpers start with `__`** — exported API keeps ordinary
+  `snake_case`; every unexported implementation function uses a double-underscore
+  prefix (for example, `__segment_views`).
 - **No unnecessary comments.** Let code and docstrings speak.
 - **Each function does a single thing.** Keep functions small and composable.
 - **Type-generic, never hardcode `Float64`.** Preallocate with `eltype`/`float`/`similar`; results preserve the input float type (Float32 → Float32, BigFloat → BigFloat).

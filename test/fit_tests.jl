@@ -39,7 +39,7 @@
 
     @testset "coefficient of determination" begin
         observed = [1.0, 2.0, 3.0]
-        @test FluctuationAnalysis.coefficient_of_determination(observed, observed) == 1.0
+        @test FluctuationAnalysis.__coefficient_of_determination(observed, observed) == 1.0
     end
 
     @testset "validation" begin

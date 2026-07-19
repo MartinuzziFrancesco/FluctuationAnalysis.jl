@@ -1,51 +1,38 @@
-"""
-    q_order_fluctuation(variances, order_q)
-
-Combine the detrended segment `variances` at a scale into the q-order
-fluctuation. For `order_q == 0` the geometric (logarithmic) average is used, as
-prescribed for multifractal detrended fluctuation analysis. The moment order is
-cast to the variance element type so the result keeps that type.
-"""
-function q_order_fluctuation(variances::AbstractVector{<:Real}, order_q::Real)
-    if abs(float(order_q)) <= 16eps(Float64)
+function __q_order_fluctuation(variances::AbstractVector{<:Real}, order_q::Real)
+    if iszero(order_q)
         return exp(mean(log.(variances)) / 2)
     end
     order = convert(float(eltype(variances)), order_q)
-    return mean(variances .^ (order / 2))^(1 / order)
+    order == 2 && return sqrt(mean(variances))
+    any(iszero, variances) && return mean(variances .^ (order / 2))^(1 / order)
+    log_variances = log.(variances)
+    log_center = mean(log_variances)
+    centered_moment = mean(exp.((order / 2) .* (log_variances .- log_center)))
+    return exp(log_center / 2 + log(centered_moment) / order)
 end
 
-"""
-    q_order_fluctuations!(row, variances, q_values, scale)
-
-Fill `row` with the q-order fluctuation of the detrended segment `variances`
-for every order in `q_values`. Requires every variance to be positive, since
-the negative-order moments of a zero variance are undefined; `scale` labels
-the error message.
-"""
-function q_order_fluctuations!(
+function __q_order_fluctuations!(
         row::AbstractVector{<:Real},
         variances::AbstractVector{<:Real},
         q_values::AbstractVector{<:Real},
         scale::Integer,
     )
-    all(variance -> variance > 0, variances) || throw(
-        ArgumentError(
-            "scale $scale produced a zero-variance segment; multifractal moments are undefined",
-        ),
-    )
+    all(>=(0), variances) ||
+        throw(ArgumentError("scale $scale produced a negative segment variance"))
+    if any(<=(0), q_values) && any(iszero, variances)
+        throw(
+            ArgumentError(
+                "scale $scale produced a zero-variance segment; nonpositive multifractal moments are undefined",
+            ),
+        )
+    end
     for (q_index, order_q) in pairs(q_values)
-        row[q_index] = q_order_fluctuation(variances, order_q)
+        row[q_index] = __q_order_fluctuation(variances, order_q)
     end
     return row
 end
 
-"""
-    mfdfa_fluctuations(profile, scales, q_values, detrender; overlap=false, bidirectional=true)
-
-Matrix of q-order fluctuations whose entry `[scale_index, q_index]` is the
-fluctuation at `scales[scale_index]` for `q_values[q_index]`.
-"""
-function mfdfa_fluctuations(
+function __mfdfa_fluctuations(
         profile::AbstractVector{<:Real},
         scales::AbstractVector{<:Integer},
         q_values::AbstractVector{<:Real},
@@ -53,28 +40,21 @@ function mfdfa_fluctuations(
         overlap::Bool = false,
         bidirectional::Bool = true,
     )
-    smallest_allowed = minimum_segment_length(detrender)
+    smallest_allowed = __minimum_segment_length(detrender)
     value_type = float(eltype(profile))
-    fluctuations = Matrix{value_type}(undef, length(scales), length(q_values))
+    fluctuations = zeros(value_type, length(scales), length(q_values))
     for (scale_index, scale) in pairs(scales)
         scale >= smallest_allowed ||
             throw(ArgumentError("scale $scale is too small for the chosen detrender"))
-        variances = segment_variances(
+        variances = __segment_variances(
             profile, scale, detrender; overlap = overlap, bidirectional = bidirectional
         )
-        q_order_fluctuations!(view(fluctuations, scale_index, :), variances, q_values, scale)
+        __q_order_fluctuations!(view(fluctuations, scale_index, :), variances, q_values, scale)
     end
     return fluctuations
 end
 
-"""
-    fit_generalized_hurst(scales, fluctuations, q_values; fitrange=nothing)
-
-Fit each column of `fluctuations` against `scales` in log-log coordinates,
-returning one [`LogLogFit`](@ref) per q value whose `exponent` is the
-generalized Hurst exponent.
-"""
-function fit_generalized_hurst(
+function __fit_generalized_hurst(
         scales::AbstractVector{<:Integer},
         fluctuations::AbstractMatrix{<:Real},
         q_values::AbstractVector{<:Real};
@@ -86,51 +66,51 @@ function fit_generalized_hurst(
     ]
 end
 
-"""
-    compute_mass_exponents(q_values, hurst_values)
-
-Mass (Rényi) scaling exponents ``τ(q) = q·h(q) - 1`` for a one-dimensional
-support.
-"""
-function compute_mass_exponents(
+function __compute_mass_exponents(
         q_values::AbstractVector{<:Real}, hurst_values::AbstractVector{<:Real}
     )
     return q_values .* hurst_values .- 1
 end
 
-"""
-    central_difference(nodes, values)
-
-Numerical derivative of `values` with respect to `nodes` using central
-differences on the interior and one-sided differences at the endpoints.
-"""
-function central_difference(nodes::AbstractVector{<:Real}, values::AbstractVector{<:Real})
+function __central_difference(nodes::AbstractVector{<:Real}, values::AbstractVector{<:Real})
     node_count = length(nodes)
+    length(values) == node_count ||
+        throw(ArgumentError("nodes and values must have equal length"))
     node_count >= 2 || throw(ArgumentError("need at least two points to differentiate"))
-    derivative = Vector{promote_type(float(eltype(nodes)), float(eltype(values)))}(
-        undef, node_count
-    )
+    for index in 2:node_count
+        nodes[index] > nodes[index - 1] ||
+            throw(ArgumentError("nodes must be strictly increasing"))
+    end
+    value_type = promote_type(float(eltype(nodes)), float(eltype(values)))
+    derivative = zeros(value_type, node_count)
     derivative[1] = (values[2] - values[1]) / (nodes[2] - nodes[1])
     derivative[node_count] =
         (values[node_count] - values[node_count - 1]) /
         (nodes[node_count] - nodes[node_count - 1])
     for index in 2:(node_count - 1)
+        previous_node = nodes[index - 1]
+        current_node = nodes[index]
+        next_node = nodes[index + 1]
+        previous_weight =
+            (current_node - next_node) /
+            ((previous_node - current_node) * (previous_node - next_node))
+        current_weight =
+            (2current_node - previous_node - next_node) /
+            ((current_node - previous_node) * (current_node - next_node))
+        next_weight =
+            (current_node - previous_node) /
+            ((next_node - previous_node) * (next_node - current_node))
         derivative[index] =
-            (values[index + 1] - values[index - 1]) / (nodes[index + 1] - nodes[index - 1])
+            previous_weight * values[index - 1] + current_weight * values[index] +
+            next_weight * values[index + 1]
     end
     return derivative
 end
 
-"""
-    compute_singularity_spectrum(q_values, mass_exponent_values)
-
-Singularity strengths ``α = dτ/dq`` and singularity spectrum
-``f(α) = q·α - τ(q)`` obtained from the mass exponents by a Legendre transform.
-"""
-function compute_singularity_spectrum(
+function __compute_singularity_spectrum(
         q_values::AbstractVector{<:Real}, mass_exponent_values::AbstractVector{<:Real}
     )
-    strengths = central_difference(q_values, mass_exponent_values)
+    strengths = __central_difference(q_values, mass_exponent_values)
     spectrum = q_values .* strengths .- mass_exponent_values
     return strengths, spectrum
 end
@@ -169,7 +149,7 @@ the data type, so a `Float32` series yields a `Float32` result regardless of the
     singularity_spectrum
 end
 
-Base.show(stream::IO, result::MFDFAResult) = show_multifractal_summary(stream, result)
+Base.show(stream::IO, result::MFDFAResult) = __show_multifractal_summary(stream, result)
 
 @doc doc"""
     mfdfa(series; kwargs...) -> MFDFAResult
@@ -180,7 +160,8 @@ The detrended segment variances are combined into q-order fluctuations for every
 order in `q_values`; the log-log slope of each gives a generalized Hurst exponent
 ``h(q)``, from which the mass exponents ``\tau(q) = q\,h(q) - 1`` and, by a
 Legendre transform, the singularity strengths ``\alpha`` and spectrum
-``f(\alpha)`` are derived. At ``q = 2`` the analysis reduces to [`dfa`](@ref).
+``f(\alpha)`` are derived. The exact ``q=0`` case uses the logarithmic limit. At
+``q = 2`` the analysis reduces exactly to [`dfa`](@ref).
 
 # Arguments
 
@@ -211,8 +192,8 @@ Legendre transform, the singularity strengths ``\alpha`` and spectrum
 # Throws
 
 - `ArgumentError`: if `series` has fewer than 8 points, if fewer than two distinct
-  `q` values are given, or if a scale yields a zero-variance segment (for which
-  the multifractal moments are undefined).
+  `q` values are given, or if a scale yields a zero-variance segment while a
+  nonpositive moment is requested.
 """
 function mfdfa(
         series::AbstractVector{<:Real};
@@ -231,15 +212,15 @@ function mfdfa(
         throw(ArgumentError("need at least two distinct q values for MFDFA"))
     scales = Int.(collect(scales))
     profile = integrated_profile(series; demean = demean)
-    fluctuations = mfdfa_fluctuations(
+    fluctuations = __mfdfa_fluctuations(
         profile, scales, sorted_q, detrender; overlap = overlap, bidirectional = bidirectional
     )
     # Carry the fluctuation value type through every derived quantity.
     q_values_typed = eltype(fluctuations).(sorted_q)
-    fits = fit_generalized_hurst(scales, fluctuations, q_values_typed; fitrange = fitrange)
+    fits = __fit_generalized_hurst(scales, fluctuations, q_values_typed; fitrange = fitrange)
     hurst_values = [fit.exponent for fit in fits]
-    mass_exponent_values = compute_mass_exponents(q_values_typed, hurst_values)
-    strengths, spectrum = compute_singularity_spectrum(q_values_typed, mass_exponent_values)
+    mass_exponent_values = __compute_mass_exponents(q_values_typed, hurst_values)
+    strengths, spectrum = __compute_singularity_spectrum(q_values_typed, mass_exponent_values)
 
     return MFDFAResult(
         q_values_typed,

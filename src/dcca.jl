@@ -1,12 +1,4 @@
-"""
-    cross_covariance_curve(first_profile, second_profile, scales, detrender;
-                           overlap=false, bidirectional=true)
-
-Detrended cross-covariance ``F^2_{DCCA}(s)`` evaluated over every entry of
-`scales`, averaged over the aligned segment pairs of the two profiles. The
-values are signed.
-"""
-function cross_covariance_curve(
+function __cross_covariance_curve(
         first_profile::AbstractVector{<:Real},
         second_profile::AbstractVector{<:Real},
         scales::AbstractVector{<:Integer},
@@ -14,14 +6,14 @@ function cross_covariance_curve(
         overlap::Bool = false,
         bidirectional::Bool = true,
     )
-    smallest_allowed = minimum_segment_length(detrender)
+    smallest_allowed = __minimum_segment_length(detrender)
     value_type = promote_type(float(eltype(first_profile)), float(eltype(second_profile)))
-    covariances = Vector{value_type}(undef, length(scales))
+    covariances = zeros(value_type, length(scales))
     for (index, scale) in pairs(scales)
         scale >= smallest_allowed ||
             throw(ArgumentError("scale $scale is too small for the chosen detrender"))
         covariances[index] = mean(
-            segment_covariances(
+            __segment_covariances(
                 first_profile,
                 second_profile,
                 scale,
@@ -82,19 +74,13 @@ function Base.show(stream::IO, result::DCCAResult)
     return nothing
 end
 
-"""
-    fit_cross_scaling(scales, covariances, cross_fluctuations; fitrange=nothing)
-
-Fit the cross-correlation exponent from the scales whose detrended covariance is
-positive and which lie within `fitrange`.
-"""
-function fit_cross_scaling(
+function __fit_cross_scaling(
         scales::AbstractVector{<:Integer},
         covariances::AbstractVector{<:Real},
         cross_fluctuations::AbstractVector{<:Real};
         fitrange::Union{Nothing, Tuple{<:Integer, <:Integer}} = nothing,
     )
-    selection = scale_selection(scales, fitrange) .& (covariances .> 0)
+    selection = __scale_selection(scales, fitrange) .& (covariances .> 0)
     count(selection) >= 2 || throw(
         ArgumentError(
             "fewer than two scales with positive detrended covariance in the fit range; " *
@@ -116,6 +102,11 @@ scale; the detrended covariance of each aligned segment pair is averaged into
 DCCA cross-correlation coefficient ``\rho_{DCCA}(s) \in [-1, 1]`` is returned for
 every scale. When the two series are identical the analysis reduces to
 [`dfa`](@ref).
+
+Podobnik and Stanley's original DCCA uses overlapping sliding boxes. Set
+`overlap = true` for that convention. The default uses the package-wide
+bidirectional disjoint segmentation so the identical-series reduction uses the
+same boxes as default [`dfa`](@ref). The coefficient follows Zebende (2011).
 
 # Arguments
 
@@ -163,12 +154,13 @@ function dcca(
     length(first_series) == length(second_series) ||
         throw(ArgumentError("the two series must have equal length"))
     length(first_series) >= 8 || throw(ArgumentError("series is too short for DCCA"))
+    identical_series = first_series == second_series
 
     scales = Int.(collect(scales))
     first_profile = integrated_profile(first_series; demean = demean)
     second_profile = integrated_profile(second_series; demean = demean)
 
-    covariances = cross_covariance_curve(
+    covariances = __cross_covariance_curve(
         first_profile,
         second_profile,
         scales,
@@ -181,20 +173,27 @@ function dcca(
     value_type = eltype(covariances)
     first_fluctuations = convert(
         Vector{value_type},
-        fluctuation_curve(
+        __fluctuation_curve(
             first_profile, scales, detrender; overlap = overlap, bidirectional = bidirectional
         ),
     )
     second_fluctuations = convert(
         Vector{value_type},
-        fluctuation_curve(
+        __fluctuation_curve(
             second_profile, scales, detrender; overlap = overlap, bidirectional = bidirectional
         ),
     )
 
-    cross_fluctuations = sign.(covariances) .* sqrt.(abs.(covariances))
-    correlation = covariances ./ (first_fluctuations .* second_fluctuations)
-    fit = fit_cross_scaling(scales, covariances, cross_fluctuations; fitrange = fitrange)
+    if identical_series
+        covariances = first_fluctuations .^ 2
+        cross_fluctuations = copy(first_fluctuations)
+        correlation = ones(value_type, length(scales))
+    else
+        cross_fluctuations = sign.(covariances) .* sqrt.(abs.(covariances))
+        correlation = covariances ./ (first_fluctuations .* second_fluctuations)
+        correlation = clamp.(correlation, -one(value_type), one(value_type))
+    end
+    fit = __fit_cross_scaling(scales, covariances, cross_fluctuations; fitrange = fitrange)
 
     return DCCAResult(
         scales,

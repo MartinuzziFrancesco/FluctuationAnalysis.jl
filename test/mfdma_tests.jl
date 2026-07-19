@@ -24,7 +24,9 @@
         series = randn(MersenneTwister(99), 5000)
         scales = logarithmic_scales(5000; minimum_scale = 8, maximum_scale = 500)
         result = mfdma(series; q_values = [2.0, 4.0], scales = scales)
-        @test isapprox(scaling_exponent(result), dma(series; scales = scales).fit.exponent; atol = 1.0e-10)
+        reference = dma(series; scales = scales)
+        @test result.fluctuations[:, 1] == reference.fluctuations
+        @test scaling_exponent(result) == reference.fit.exponent
     end
 
     @testset "theta and moving_average keywords agree" begin

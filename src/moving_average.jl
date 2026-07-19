@@ -23,18 +23,19 @@ over the whole profile rather than per segment, so it is not a subtype of
 
 # Fields
 
-- `theta::Float64`: the window position parameter.
+- `theta::T`: the floated window position, preserving the precision of the input.
 
 # Throws
 
 - `ArgumentError`: if `theta` is outside `[0, 1]`.
 """
-struct MovingAverage
-    theta::Float64
+struct MovingAverage{T <: AbstractFloat}
+    theta::T
     function MovingAverage(theta::Real)
         0 <= theta <= 1 ||
             throw(ArgumentError("moving-average position theta must lie in [0, 1]"))
-        return new(Float64(theta))
+        floated_theta = float(theta)
+        return new{typeof(floated_theta)}(floated_theta)
     end
 end
 
@@ -54,18 +55,7 @@ function Base.show(stream::IO, moving_average::MovingAverage)
     return nothing
 end
 
-"""
-    window_offsets(window, theta)
-
-Number of past and future points spanned by a moving-average window of size
-`window` at position `theta`, returned as `(past, future)`.
-
-Following Gu & Zhou (2010), the window holds `future = floor((window - 1) * theta)`
-future points and `past = (window - 1) - future` past points, so that
-`past + future + 1 == window` exactly. Computing `past` from `future` avoids any
-floating-point disagreement between the floor and ceiling forms.
-"""
-function window_offsets(window::Integer, theta::Real)
+function __window_offsets(window::Integer, theta::Real)
     window >= 2 || throw(ArgumentError("moving-average window must be at least 2"))
     0 <= theta <= 1 || throw(ArgumentError("moving-average position theta must lie in [0, 1]"))
     future = floor(Int, (window - 1) * theta)
@@ -73,22 +63,13 @@ function window_offsets(window::Integer, theta::Real)
     return past, future
 end
 
-"""
-    moving_average(profile, window, moving_average_spec)
-
-Moving-average trend of `profile` for a window of size `window`, evaluated at
-every index where the full window fits.
-
-Returns a vector of length `length(profile) - window + 1`; entry `j` is the mean
-of `profile` over the window centred (per `theta`) on index `past + j`.
-"""
-function moving_average(
+function __moving_average_trend(
         profile::AbstractVector{<:Real}, window::Integer, moving_average_spec::MovingAverage
     )
     profile_length = length(profile)
     window <= profile_length ||
         throw(ArgumentError("window must not exceed the profile length"))
-    past, future = window_offsets(window, moving_average_spec.theta)
+    past, future = __window_offsets(window, moving_average_spec.theta)
     valid_length = profile_length - window + 1
     trend = similar(profile, float(eltype(profile)), valid_length)
     for (output_index, center) in enumerate((past + 1):(profile_length - future))
@@ -97,81 +78,49 @@ function moving_average(
     return trend
 end
 
-"""
-    moving_average_residual(profile, window, moving_average_spec)
-
-Residual of `profile` after subtracting its [`moving_average`](@ref) trend,
-restricted to the indices where the full window fits.
-
-Returns a vector of length `length(profile) - window + 1`, the sequence
-``ε(i) = y(i) - ỹ(i)`` of Gu & Zhou (2010).
-"""
-function moving_average_residual(
+function __moving_average_residual(
         profile::AbstractVector{<:Real}, window::Integer, moving_average_spec::MovingAverage
     )
-    past, future = window_offsets(window, moving_average_spec.theta)
-    trend = moving_average(profile, window, moving_average_spec)
+    past, future = __window_offsets(window, moving_average_spec.theta)
+    trend = __moving_average_trend(profile, window, moving_average_spec)
     valid = @view profile[(past + 1):(length(profile) - future)]
     return valid .- trend
 end
 
-"""
-    moving_average_variances(profile, window, moving_average_spec)
-
-Mean squared residual of every disjoint segment of size `window` taken from the
-moving-average residual of `profile`.
-
-The residual is partitioned into the non-overlapping segments that fit within it,
-in order, and each segment's mean square ``F_v^2(n) = (1/n) Σ ε_v(i)^2`` is
-returned. This mirrors steps 3–4 of the Gu & Zhou (2010) MFDMA algorithm.
-"""
-function moving_average_variances(
+function __moving_average_variances(
         profile::AbstractVector{<:Real}, window::Integer, moving_average_spec::MovingAverage
     )
-    residual = moving_average_residual(profile, window, moving_average_spec)
+    residual = __moving_average_residual(profile, window, moving_average_spec)
     length(residual) >= window ||
         throw(ArgumentError("window $window is too large to form a residual segment"))
-    segments = segment_views(residual, window; overlap = false, bidirectional = false)
-    return map(segment -> mean(abs2, segment), segments)
+    segments = __segment_views(residual, window; overlap = false, bidirectional = false)
+    return map(Base.Fix1(mean, abs2), segments)
 end
 
-"""
-    dma_fluctuation_curve(profile, scales, moving_average_spec)
-
-Root-mean-square detrending-moving-average fluctuation of `profile` at each scale
-in `scales`, computed as the square root of the mean segment variance.
-"""
-function dma_fluctuation_curve(
+function __dma_fluctuation_curve(
         profile::AbstractVector{<:Real},
         scales::AbstractVector{<:Integer},
         moving_average_spec::MovingAverage,
     )
     fluctuations = similar(profile, float(eltype(profile)), length(scales))
     for (index, scale) in pairs(scales)
-        variances = moving_average_variances(profile, scale, moving_average_spec)
+        variances = __moving_average_variances(profile, scale, moving_average_spec)
         fluctuations[index] = sqrt(mean(variances))
     end
     return fluctuations
 end
 
-"""
-    mfdma_fluctuations(profile, scales, q_values, moving_average_spec)
-
-Matrix of q-order moving-average fluctuations whose entry `[scale_index, q_index]`
-is the fluctuation at `scales[scale_index]` for `q_values[q_index]`, following
-step 5 of Gu & Zhou (2010). Reuses [`q_order_fluctuation`](@ref).
-"""
-function mfdma_fluctuations(
+function __mfdma_fluctuations(
         profile::AbstractVector{<:Real},
         scales::AbstractVector{<:Integer},
         q_values::AbstractVector{<:Real},
         moving_average_spec::MovingAverage,
     )
     value_type = float(eltype(profile))
-    fluctuations = Matrix{value_type}(undef, length(scales), length(q_values))
+    fluctuations = zeros(value_type, length(scales), length(q_values))
     for (scale_index, scale) in pairs(scales)
-        variances = moving_average_variances(profile, scale, moving_average_spec)
-        q_order_fluctuations!(view(fluctuations, scale_index, :), variances, q_values, scale)
+        variances = __moving_average_variances(profile, scale, moving_average_spec)
+        __q_order_fluctuations!(view(fluctuations, scale_index, :), variances, q_values, scale)
     end
     return fluctuations
 end

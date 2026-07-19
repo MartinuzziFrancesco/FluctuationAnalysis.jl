@@ -31,7 +31,7 @@ the data type, so a `Float32` series yields a `Float32` result.
     singularity_spectrum
 end
 
-Base.show(stream::IO, result::MFDMAResult) = show_multifractal_summary(stream, result)
+Base.show(stream::IO, result::MFDMAResult) = __show_multifractal_summary(stream, result)
 
 @doc doc"""
     scaling_exponent(result::Union{MFDFAResult, MFDMAResult}) -> AbstractFloat
@@ -52,7 +52,7 @@ Generalized Hurst exponent at ``q = 2``, the standard DFA/DMA scaling exponent.
 - `ArgumentError`: if ``q = 2`` is not among the moment orders.
 """
 function scaling_exponent(result::Union{MFDFAResult, MFDMAResult})
-    index = findfirst(order_q -> isapprox(order_q, 2), result.q_values)
+    index = findfirst(Base.Fix2(isapprox, 2), result.q_values)
     index === nothing &&
         throw(ArgumentError("scaling_exponent requires q = 2 among the q values"))
     return result.generalized_hurst[index]
@@ -69,8 +69,8 @@ the residual is split into disjoint segments, and the segment mean squares are
 combined into q-order fluctuations for every order in `q_values`. The log-log slope
 of each gives a generalized Hurst exponent ``h(q)``, from which the mass exponents
 ``\tau(q) = q\,h(q) - 1`` and, by a Legendre transform, the singularity strengths
-``\alpha`` and spectrum ``f(\alpha)`` are derived. At ``q = 2`` the result matches
-[`dma`](@ref).
+``\alpha`` and spectrum ``f(\alpha)`` are derived. The exact ``q=0`` case uses the
+logarithmic limit. At ``q = 2`` the result matches [`dma`](@ref) exactly.
 
 # Arguments
 
@@ -101,7 +101,8 @@ of each gives a generalized Hurst exponent ``h(q)``, from which the mass exponen
 # Throws
 
 - `ArgumentError`: if `series` has fewer than 8 points, if fewer than two distinct
-  `q` values are given, or if a scale yields a zero-variance segment.
+  `q` values are given, or if a scale yields a zero-variance segment while a
+  nonpositive moment is requested.
 """
 function mfdma(
         series::AbstractVector{<:Real};
@@ -119,13 +120,13 @@ function mfdma(
 
     scales = Int.(collect(scales))
     profile = integrated_profile(series; demean = demean)
-    fluctuations = mfdma_fluctuations(profile, scales, sorted_q, moving_average)
+    fluctuations = __mfdma_fluctuations(profile, scales, sorted_q, moving_average)
     # Carry the fluctuation value type through every derived quantity.
     q_values_typed = eltype(fluctuations).(sorted_q)
-    fits = fit_generalized_hurst(scales, fluctuations, q_values_typed; fitrange = fitrange)
+    fits = __fit_generalized_hurst(scales, fluctuations, q_values_typed; fitrange = fitrange)
     hurst_values = [fit.exponent for fit in fits]
-    mass_exponent_values = compute_mass_exponents(q_values_typed, hurst_values)
-    strengths, spectrum = compute_singularity_spectrum(q_values_typed, mass_exponent_values)
+    mass_exponent_values = __compute_mass_exponents(q_values_typed, hurst_values)
+    strengths, spectrum = __compute_singularity_spectrum(q_values_typed, mass_exponent_values)
 
     return MFDMAResult(
         q_values_typed,

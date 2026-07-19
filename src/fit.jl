@@ -23,29 +23,18 @@ The numeric fields share the value type `float(eltype(fluctuations))`.
     fitted_scale_range::Tuple{Int, Int}
 end
 
-"""
-    coefficient_of_determination(observed, predicted)
-
-Coefficient of determination of `predicted` against `observed`.
-"""
-function coefficient_of_determination(observed::AbstractVector, predicted::AbstractVector)
+function __coefficient_of_determination(observed::AbstractVector, predicted::AbstractVector)
     residual_sum = sum(abs2, observed .- predicted)
     total_sum = sum(abs2, observed .- mean(observed))
     total_sum == 0 && return one(residual_sum)
     return 1 - residual_sum / total_sum
 end
 
-"""
-    scale_selection(scales, fitrange)
-
-Boolean mask selecting the scales that lie within `fitrange`, given as a
-`(lower, upper)` tuple. When `fitrange` is `nothing` every scale is selected.
-"""
-function scale_selection(scales::AbstractVector{<:Integer}, fitrange::Nothing)
+function __scale_selection(scales::AbstractVector{<:Integer}, fitrange::Nothing)
     return trues(length(scales))
 end
 
-function scale_selection(
+function __scale_selection(
         scales::AbstractVector{<:Integer}, fitrange::Tuple{<:Integer, <:Integer}
     )
     lower, upper = fitrange
@@ -92,19 +81,21 @@ function loglog_fit(
 
     scales = collect(scales)
     fluctuations = collect(fluctuations)
-    selection = scale_selection(scales, fitrange)
+    selection = __scale_selection(scales, fitrange)
     count(selection) >= 2 ||
         throw(ArgumentError("need at least two scales within the fitting range"))
 
     selected_scales = scales[selection]
-    all(scale -> scale > 0, selected_scales) ||
+    all(>(0), selected_scales) ||
         throw(ArgumentError("selected scales must be positive for a log-log fit"))
     selected_fluctuations = float.(fluctuations[selection])
-    all(value -> isfinite(value) && value > 0, selected_fluctuations) || throw(
-        ArgumentError(
-            "selected fluctuations must be finite and positive for a log-log fit"
-        ),
-    )
+    for value in selected_fluctuations
+        isfinite(value) && value > 0 || throw(
+            ArgumentError(
+                "selected fluctuations must be finite and positive for a log-log fit"
+            ),
+        )
+    end
 
     # Carry the fluctuation element type through the fit so no conversion happens.
     T = eltype(selected_fluctuations)
@@ -112,7 +103,7 @@ function loglog_fit(
     log_fluctuations = log.(selected_fluctuations)
     design = hcat(log_scales, ones(T, length(log_scales)))
     coefficients = design \ log_fluctuations
-    rsquared = coefficient_of_determination(log_fluctuations, design * coefficients)
+    rsquared = __coefficient_of_determination(log_fluctuations, design * coefficients)
 
     return LogLogFit(
         coefficients[1],

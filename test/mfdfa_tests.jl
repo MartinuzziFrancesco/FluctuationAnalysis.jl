@@ -1,31 +1,51 @@
 @testitem "mfdfa: internals" begin
     using FluctuationAnalysis
-    q_order_fluctuation = FluctuationAnalysis.q_order_fluctuation
+    __q_order_fluctuation = FluctuationAnalysis.__q_order_fluctuation
 
     @testset "q-order fluctuation of equal variances" begin
         variances = [4.0, 4.0, 4.0]
         for order_q in (-2.0, 0.0, 1.0, 3.0)
-            @test isapprox(q_order_fluctuation(variances, order_q), 2.0; atol = 1.0e-12)
+            @test isapprox(__q_order_fluctuation(variances, order_q), 2.0; atol = 1.0e-12)
         end
     end
 
-    @testset "near-zero q uses the logarithmic limit" begin
-        variances = [1.0, 4.0, 9.0]
-        reference = q_order_fluctuation(variances, 0.0)
-        @test isapprox(q_order_fluctuation(variances, 1.0e-16), reference; atol = 1.0e-12)
-        @test isapprox(q_order_fluctuation(variances, -1.0e-16), reference; atol = 1.0e-12)
+    @testset "only exact zero q uses the logarithmic limit" begin
+        variances = BigFloat[1, 4, 9]
+        zero_order = __q_order_fluctuation(variances, big"0")
+        positive_order = __q_order_fluctuation(variances, big"1e-20")
+        negative_order = __q_order_fluctuation(variances, big"-1e-20")
+        @test positive_order > zero_order
+        @test negative_order < zero_order
+    end
+
+    @testset "zero variances are valid only for positive q" begin
+        row = zeros(2)
+        FluctuationAnalysis.__q_order_fluctuations!(row, [0.0, 4.0], [2.0, 4.0], 8)
+        @test row == [sqrt(2), 8.0^(1 / 4)]
+        @test_throws ArgumentError FluctuationAnalysis.__q_order_fluctuations!(
+            row, [0.0, 4.0], [0.0, 2.0], 8
+        )
     end
 
     @testset "mass exponents follow q h(q) - 1" begin
         q_values = [-1.0, 0.0, 2.0]
         hurst_values = [0.6, 0.5, 0.4]
-        @test FluctuationAnalysis.compute_mass_exponents(q_values, hurst_values) ==
+        @test FluctuationAnalysis.__compute_mass_exponents(q_values, hurst_values) ==
             q_values .* hurst_values .- 1
     end
 
     @testset "central difference of a line is its slope" begin
         nodes = [1.0, 2.0, 3.0, 4.0]
-        @test FluctuationAnalysis.central_difference(nodes, 3.0 .* nodes .+ 1.0) == fill(3.0, 4)
+        @test FluctuationAnalysis.__central_difference(nodes, 3.0 .* nodes .+ 1.0) == fill(3.0, 4)
+    end
+
+    @testset "central difference supports irregular q spacing" begin
+        nodes = [0.0, 1.0, 3.0, 6.0]
+        derivative = FluctuationAnalysis.__central_difference(nodes, nodes .^ 2)
+        @test derivative[2:3] ≈ 2 .* nodes[2:3]
+        @test_throws ArgumentError FluctuationAnalysis.__central_difference(
+            [0.0, 2.0, 1.0], [0.0, 4.0, 1.0]
+        )
     end
 end
 
@@ -54,7 +74,9 @@ end
         series = randn(MersenneTwister(99), 5000)
         scales = logarithmic_scales(5000; minimum_scale = 8, maximum_scale = 500)
         result = mfdfa(series; q_values = [2.0, 4.0], scales = scales)
-        @test isapprox(scaling_exponent(result), dfa(series; scales = scales).fit.exponent; atol = 1.0e-10)
+        reference = dfa(series; scales = scales)
+        @test result.fluctuations[:, 1] == reference.fluctuations
+        @test scaling_exponent(result) == reference.fit.exponent
     end
 
     @testset "mass exponents are monotonically increasing in q" begin
