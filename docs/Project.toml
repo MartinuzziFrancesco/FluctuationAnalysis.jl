@@ -4,3 +4,4 @@ FluctuationAnalysis = "dd48889e-8609-46c3-8fa7-f4a081ef0fb3"
 
 [compat]
 Documenter = "1.17.0"
+FluctuationAnalysis = "0.1.0"
