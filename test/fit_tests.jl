@@ -48,6 +48,7 @@
         @test_throws ArgumentError loglog_fit([4, 8], [0.0, 2.0])        # zero fluctuation
         @test_throws ArgumentError loglog_fit([4, 8], [-1.0, 2.0])       # negative
         @test_throws ArgumentError loglog_fit([4, 8], [NaN, 2.0])        # non-finite
+        @test_throws ArgumentError loglog_fit([4, 8], [Inf, 2.0])        # non-finite
         @test_throws ArgumentError loglog_fit([0, 8], [1.0, 2.0])        # non-positive scale
         @test_throws ArgumentError loglog_fit([4, 4], [1.0, 2.0])        # rank-deficient scales
         @test_throws ArgumentError loglog_fit([4, 8], [1.0, 2.0]; fitrange = (8, 4))

@@ -49,6 +49,16 @@ end
         @test all(value -> -1.0 <= value <= 1.0, result.correlation)
     end
 
+    @testset "signed and zero-denominator correlation conventions" begin
+        correlation = FluctuationAnalysis.__dcca_correlation(
+            [-2.0, 2.0], [2.0, 2.0], [1.0, 1.0], [8, 16]
+        )
+        @test correlation == [-1.0, 1.0]
+        @test_throws ArgumentError FluctuationAnalysis.__dcca_correlation(
+            [0.0, 1.0], [0.0, 1.0], [1.0, 1.0], [8, 16]
+        )
+    end
+
     @testset "coupled series are strongly positively correlated" begin
         rng = MersenneTwister(10)
         common = cumsum(randn(rng, 8000))

@@ -60,6 +60,12 @@ end
     )
     for series in constant_inputs
         @test_throws ArgumentError dfa(series; scales = [8, 16])
+        @test_throws ArgumentError dma(series; scales = [8, 16])
+        @test_throws ArgumentError mfdfa(series; q_values = [2.0, 3.0], scales = [8, 16])
+        @test_throws ArgumentError mfdma(series; q_values = [2.0, 3.0], scales = [8, 16])
+        @test_throws ArgumentError hurst(series; scales = [8, 16])
+        @test_throws ArgumentError hurst(series, RescaledRangeHurst(); scales = [8, 16])
+        @test_throws ArgumentError dcca(series, series; scales = [8, 16])
     end
 end
 

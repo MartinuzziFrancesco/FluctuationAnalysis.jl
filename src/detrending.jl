@@ -57,6 +57,19 @@ function __polynomial_design_matrix(
     return design
 end
 
+function __polynomial_factorization(design::AbstractMatrix{<:Real})
+    factorization = LinearAlgebra.qr(design, LinearAlgebra.ColumnNorm())
+    diagonal = LinearAlgebra.diag(factorization.R)
+    largest_diagonal = maximum(abs, diagonal)
+    tolerance = max(size(design)...) * eps(one(eltype(design))) * largest_diagonal
+    minimum(abs, diagonal) > tolerance || throw(
+        ArgumentError(
+            "polynomial detrending design is numerically rank deficient; reduce the detrending order or use a higher-precision input type",
+        ),
+    )
+    return factorization
+end
+
 """
     detrend(detrender::AbstractDetrender, segment) -> Vector
 
@@ -78,7 +91,8 @@ the trend is the least-squares polynomial fit of the configured degree.
 
 # Throws
 
-- `ArgumentError`: if `segment` is not longer than the polynomial degree.
+- `ArgumentError`: if `segment` is not longer than the polynomial degree or the
+  polynomial design is numerically rank deficient at the input precision.
 """
 function detrend(detrender::PolynomialDetrender, segment::AbstractVector{<:Real})
     segment_length = length(segment)
@@ -86,6 +100,7 @@ function detrend(detrender::PolynomialDetrender, segment::AbstractVector{<:Real}
         throw(ArgumentError("segment length must exceed the detrending order"))
     values = float.(collect(segment))
     design = __polynomial_design_matrix(segment_length, detrender.order, eltype(values))
-    coefficients = design \ values
+    factorization = __polynomial_factorization(design)
+    coefficients = factorization \ values
     return values .- design * coefficients
 end
