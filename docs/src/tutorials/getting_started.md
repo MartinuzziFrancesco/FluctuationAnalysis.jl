@@ -100,9 +100,19 @@ walk = cumsum(randn(MersenneTwister(2), 10_000))
 scaling_exponent(dfa(walk))
 ```
 
+## Automatic differentiation
+
+The analysis functions propagate ForwardDiff dual numbers when differentiating
+with respect to the values of `series`. Treat scales, moment orders, segmentation,
+detrending order, and fitting ranges as fixed configuration. This guarantee is
+specific to ForwardDiff; compatibility with other automatic differentiation
+backends is not guaranteed. Derivatives are not defined at discrete branch changes
+or degenerate points such as a change in the selected fit scales, zero segment
+variance for nonpositive moments, or a change in the extremal cumulative deviation
+selected by rescaled-range analysis.
+
 ## Next steps
 
 - [Multifractal analysis](@ref) resolves the exponent across moment orders.
 - [Detrending moving average](@ref) swaps the polynomial fit for a moving average.
 - [Hurst exponent](@ref) wraps DFA and rescaled-range estimation behind one call.
-```

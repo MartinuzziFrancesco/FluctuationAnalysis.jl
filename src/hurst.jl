@@ -149,7 +149,7 @@ function hurst(
 end
 
 """
-    hurst_exponent(result::HurstResult) -> AbstractFloat
+    hurst_exponent(result::HurstResult) -> Real
 
 Estimated Hurst exponent held by a [`HurstResult`](@ref); equivalent to
 [`scaling_exponent`](@ref) on the same result.

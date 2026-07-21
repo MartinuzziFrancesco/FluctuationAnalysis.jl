@@ -34,7 +34,7 @@ end
 Base.show(stream::IO, result::MFDMAResult) = __show_multifractal_summary(stream, result)
 
 @doc doc"""
-    scaling_exponent(result::Union{MFDFAResult, MFDMAResult}) -> AbstractFloat
+    scaling_exponent(result::Union{MFDFAResult, MFDMAResult}) -> Real
 
 Generalized Hurst exponent at ``q = 2``, the standard DFA/DMA scaling exponent.
 

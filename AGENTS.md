@@ -38,7 +38,9 @@ julia --startup-file=no --project=docs docs/make.jl
   prefix (for example, `__segment_views`).
 - **No unnecessary comments.** Let code and docstrings speak.
 - **Each function does a single thing.** Keep functions small and composable.
-- **Type-generic, never hardcode `Float64`.** Preallocate with `eltype`/`float`/`similar`; results preserve the input float type (Float32 → Float32, BigFloat → BigFloat).
+- **Type-generic, never hardcode `Float64`.** Preallocate with
+  `eltype`/`float`/`similar`; results preserve the input scalar type, including
+  ForwardDiff dual numbers (Float32 → Float32, BigFloat → BigFloat).
 - **Normalize inputs at exported boundaries** to a 1-based plain array; accept `Array`, views, `OffsetArray`, ranges, and `Int`/`Float32`/`Float64`/`BigFloat`/`Rational` eltypes.
 - **Use `Int.(collect(scales))`, never `collect(Int, scales)`** — only 1-arg `collect` resets offset axes to `Base.OneTo`; the 2-arg form, comprehensions, and generators preserve them.
 - **Keep per-segment statistics on `mean` (1/s).** This preserves the exact reduction identities (`dcca(x, x) == dfa(x)`, MFDFA `h(2)` → DFA, DMA = MFDMA at `q = 2`) — verify they still hold after touching the fluctuation machinery.
@@ -51,6 +53,8 @@ julia --startup-file=no --project=docs docs/make.jl
 - **ReTestItems.** Put each concern in `test/<concern>_tests.jl` (the `_tests.jl` suffix is required) as standalone `@testitem "name" begin ... end` blocks; each declares its own imports and runs isolated/parallel.
 - Split expensive statistical-convergence tests into their own testitems so they parallelize.
 - When touching the public boundary, add coverage to `input_types_tests.jl` (every container/eltype variant must match the `Vector{Float64}` baseline).
+- Keep `ad_tests.jl` passing: exported analyses support ForwardDiff derivatives
+  with respect to series values while discrete configuration remains fixed.
 - Aqua + JET live in `quality_tests.jl`.
 
 ## Doc rules

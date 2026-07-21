@@ -111,13 +111,12 @@ function __dma_fluctuation_curve(
 end
 
 function __mfdma_fluctuations(
-        profile::AbstractVector{<:Real},
+        profile::AbstractVector{T},
         scales::AbstractVector{<:Integer},
         q_values::AbstractVector{<:Real},
         moving_average_spec::MovingAverage,
-    )
-    value_type = float(eltype(profile))
-    fluctuations = zeros(value_type, length(scales), length(q_values))
+    ) where {T <: Real}
+    fluctuations = zeros(T, length(scales), length(q_values))
     for (scale_index, scale) in pairs(scales)
         variances = __moving_average_variances(profile, scale, moving_average_spec)
         __q_order_fluctuations!(view(fluctuations, scale_index, :), variances, q_values, scale)
