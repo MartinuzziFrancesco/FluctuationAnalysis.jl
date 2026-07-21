@@ -41,7 +41,8 @@ time series. More specifically the software offers:
     and exposed for building custom analyses.
   - **ForwardDiff support** for derivatives with respect to the input series while
     scales, moment orders, segmentation, detrending order, and fit ranges remain
-    fixed configuration.
+    fixed configuration. Compatibility with other automatic differentiation
+    backends is not guaranteed.
 
 See the [documentation](https://MartinuzziFrancesco.github.io/FluctuationAnalysis.jl/dev/)
 for tutorials and the full API reference.

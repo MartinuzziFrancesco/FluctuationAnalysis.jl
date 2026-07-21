@@ -104,10 +104,12 @@ scaling_exponent(dfa(walk))
 
 The analysis functions propagate ForwardDiff dual numbers when differentiating
 with respect to the values of `series`. Treat scales, moment orders, segmentation,
-detrending order, and fitting ranges as fixed configuration. Derivatives are not
-defined at discrete branch changes or degenerate points such as a change in the
-selected fit scales, zero segment variance for nonpositive moments, or a change in
-the extremal cumulative deviation selected by rescaled-range analysis.
+detrending order, and fitting ranges as fixed configuration. This guarantee is
+specific to ForwardDiff; compatibility with other automatic differentiation
+backends is not guaranteed. Derivatives are not defined at discrete branch changes
+or degenerate points such as a change in the selected fit scales, zero segment
+variance for nonpositive moments, or a change in the extremal cumulative deviation
+selected by rescaled-range analysis.
 
 ## Next steps
 
