@@ -35,6 +35,7 @@
     @testset "validation" begin
         @test_throws ArgumentError dcca(randn(2000), randn(1999))      # unequal length
         @test_throws ArgumentError dcca([1.0, 2.0, 3.0], [1.0, 2.0, 3.0])  # too short
+        @test_throws ArgumentError dcca(ones(100), collect(1.0:100.0); scales = [8, 16])
     end
 end
 

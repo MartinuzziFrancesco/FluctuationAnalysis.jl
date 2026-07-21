@@ -38,6 +38,8 @@ function __scale_selection(
         scales::AbstractVector{<:Integer}, fitrange::Tuple{<:Integer, <:Integer}
     )
     lower, upper = fitrange
+    lower <= upper ||
+        throw(ArgumentError("fit range lower bound must not exceed its upper bound"))
     return (scales .>= lower) .& (scales .<= upper)
 end
 
@@ -67,9 +69,9 @@ exponent of the analysis.
 
 # Throws
 
-- `ArgumentError`: if `scales` and `fluctuations` differ in length, if fewer than
-  two scales fall in the fitting range, or if any fitted scale or fluctuation is
-  not positive and finite.
+- `ArgumentError`: if `scales` and `fluctuations` differ in length, if the fitting
+  range is reversed, if fewer than two distinct scales fall in the fitting range,
+  or if any fitted scale or fluctuation is not positive and finite.
 """
 function loglog_fit(
         scales::AbstractVector{<:Integer},
@@ -88,6 +90,8 @@ function loglog_fit(
     selected_scales = scales[selection]
     all(>(0), selected_scales) ||
         throw(ArgumentError("selected scales must be positive for a log-log fit"))
+    allunique(selected_scales) ||
+        throw(ArgumentError("selected scales must be distinct for a log-log fit"))
     selected_fluctuations = float.(fluctuations[selection])
     for value in selected_fluctuations
         isfinite(value) && value > 0 || throw(

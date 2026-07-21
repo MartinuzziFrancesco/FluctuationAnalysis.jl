@@ -30,3 +30,9 @@ function integrated_profile(series::AbstractVector{<:Real}; demean::Bool = true)
     centered = demean ? values .- mean(values) : values
     return cumsum(centered)
 end
+
+function __require_nonconstant_series(series::AbstractVector{<:Real}, analysis::AbstractString)
+    all(==(first(series)), series) &&
+        throw(ArgumentError("$analysis is undefined for a constant series"))
+    return nothing
+end

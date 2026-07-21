@@ -45,6 +45,9 @@
         @test_throws ArgumentError mfdma([1.0, 2.0, 3.0])
         @test_throws ArgumentError mfdma(randn(2000); q_values = [1.0])
         @test_throws ArgumentError mfdma(randn(2000); q_values = [1.0, 1.0])
+        @test_throws ArgumentError mfdma(ones(100); q_values = [2.0, 4.0], scales = [8, 16])
+        @test_throws ArgumentError mfdma(randn(100); q_values = [2.0, Inf], scales = [8, 16])
+        @test_throws ArgumentError mfdma(randn(100); q_values = [2.0, NaN], scales = [8, 16])
     end
 end
 

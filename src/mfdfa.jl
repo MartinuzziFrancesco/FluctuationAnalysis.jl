@@ -190,9 +190,10 @@ Legendre transform, the singularity strengths ``\alpha`` and spectrum
 
 # Throws
 
-- `ArgumentError`: if `series` has fewer than 8 points, if fewer than two distinct
-  `q` values are given, or if a scale yields a zero-variance segment while a
-  nonpositive moment is requested.
+- `ArgumentError`: if `series` has fewer than 8 points or is constant, if fewer
+  than two distinct finite `q` values are given, if a scale yields a zero-variance
+  segment while a nonpositive moment is requested, or if a fitted fluctuation is
+  not positive and finite.
 """
 function mfdfa(
         series::AbstractVector{<:Real};
@@ -206,7 +207,9 @@ function mfdfa(
         fitrange::Union{Nothing, Tuple{<:Integer, <:Integer}} = nothing,
     )
     length(series) >= 8 || throw(ArgumentError("series is too short for MFDFA"))
+    __require_nonconstant_series(series, "MFDFA")
     sorted_q = sort(unique(float.(q_values)))
+    all(isfinite, sorted_q) || throw(ArgumentError("q values must be finite"))
     length(sorted_q) >= 2 ||
         throw(ArgumentError("need at least two distinct q values for MFDFA"))
     scales = Int.(collect(scales))

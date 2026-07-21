@@ -37,6 +37,7 @@
 
     @testset "short series is rejected" begin
         @test_throws ArgumentError hurst([1.0, 2.0, 3.0])
+        @test_throws ArgumentError hurst(ones(100); scales = [8, 16])
     end
 end
 
