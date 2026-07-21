@@ -1,6 +1,6 @@
 name = "FluctuationAnalysis"
 uuid = "dd48889e-8609-46c3-8fa7-f4a081ef0fb3"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Francesco Martinuzzi"]
 
 [deps]
