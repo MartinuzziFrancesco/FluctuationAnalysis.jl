@@ -34,8 +34,9 @@ The slope is the DFA scaling exponent, read with [`scaling_exponent`](@ref).
 
 # Throws
 
-- `ArgumentError`: if `series` has fewer than 8 points, or if a scale is too small
-  for the chosen detrender.
+- `ArgumentError`: if `series` has fewer than 8 points or is constant, if a scale
+  is invalid for the chosen detrender, or if the fitted fluctuations are not
+  positive and finite.
 """
 function dfa(
         series::AbstractVector{<:Real};
@@ -48,6 +49,7 @@ function dfa(
         fitrange::Union{Nothing, Tuple{<:Integer, <:Integer}} = nothing,
     )
     length(series) >= 8 || throw(ArgumentError("series is too short for DFA"))
+    __require_nonconstant_series(series, "DFA")
 
     scales = Int.(collect(scales))
     profile = integrated_profile(series; demean = demean)

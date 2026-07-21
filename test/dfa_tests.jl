@@ -43,6 +43,9 @@
     @testset "validation" begin
         @test_throws ArgumentError dfa([1.0, 2.0, 3.0])               # too short
         @test_throws ArgumentError dfa(fill(1.0, 100); scales = [8, 16, 32])  # zero fluctuation
+        @test_throws ArgumentError dfa(randn(100); order = 2, scales = [3, 8])
+        @test_throws ArgumentError dfa(randn(100); scales = [8, 101])
+        @test_throws ArgumentError dfa(randn(100); scales = [8, 8])
     end
 end
 

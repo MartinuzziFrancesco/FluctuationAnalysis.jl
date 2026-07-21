@@ -43,6 +43,32 @@
     end
 end
 
+@testitem "input types: constant series rejection" begin
+    using FluctuationAnalysis
+    using OffsetArrays
+
+    values = ones(100)
+    constant_inputs = (
+        ones(Int, 100),
+        ones(Float32, 100),
+        values,
+        big.(values),
+        fill(1 // 2, 100),
+        view(values, eachindex(values)),
+        OffsetArray(values, 0:99),
+        range(1.0; step = 0.0, length = 100),
+    )
+    for series in constant_inputs
+        @test_throws ArgumentError dfa(series; scales = [8, 16])
+        @test_throws ArgumentError dma(series; scales = [8, 16])
+        @test_throws ArgumentError mfdfa(series; q_values = [2.0, 3.0], scales = [8, 16])
+        @test_throws ArgumentError mfdma(series; q_values = [2.0, 3.0], scales = [8, 16])
+        @test_throws ArgumentError hurst(series; scales = [8, 16])
+        @test_throws ArgumentError hurst(series, RescaledRangeHurst(); scales = [8, 16])
+        @test_throws ArgumentError dcca(series, series; scales = [8, 16])
+    end
+end
+
 @testitem "input types: element types" begin
     using FluctuationAnalysis
     using Random

@@ -26,6 +26,8 @@
 
     @testset "validation" begin
         @test_throws ArgumentError dma([1.0, 2.0, 3.0])
+        @test_throws ArgumentError dma(ones(100); scales = [8, 16])
+        @test_throws ArgumentError dma(randn(100); scales = [8, 101])
     end
 end
 

@@ -100,9 +100,10 @@ logarithmic limit. At ``q = 2`` the result matches [`dma`](@ref) exactly.
 
 # Throws
 
-- `ArgumentError`: if `series` has fewer than 8 points, if fewer than two distinct
-  `q` values are given, or if a scale yields a zero-variance segment while a
-  nonpositive moment is requested.
+- `ArgumentError`: if `series` has fewer than 8 points or is constant, if fewer
+  than two distinct finite `q` values are given, if a scale yields a zero-variance
+  segment while a nonpositive moment is requested, or if a fitted fluctuation is
+  not positive and finite.
 """
 function mfdma(
         series::AbstractVector{<:Real};
@@ -114,7 +115,9 @@ function mfdma(
         fitrange::Union{Nothing, Tuple{<:Integer, <:Integer}} = nothing,
     )
     length(series) >= 8 || throw(ArgumentError("series is too short for MFDMA"))
+    __require_nonconstant_series(series, "MFDMA")
     sorted_q = sort(unique(float.(q_values)))
+    all(isfinite, sorted_q) || throw(ArgumentError("q values must be finite"))
     length(sorted_q) >= 2 ||
         throw(ArgumentError("need at least two distinct q values for MFDMA"))
 

@@ -90,6 +90,23 @@ function __fit_cross_scaling(
     return loglog_fit(scales[selection], cross_fluctuations[selection])
 end
 
+function __dcca_correlation(
+        covariances::AbstractVector{<:Real},
+        first_fluctuations::AbstractVector{<:Real},
+        second_fluctuations::AbstractVector{<:Real},
+        scales::AbstractVector{<:Integer},
+    )
+    denominators = first_fluctuations .* second_fluctuations
+    zero_indices = findall(iszero, denominators)
+    isempty(zero_indices) || throw(
+        ArgumentError(
+            "DCCA correlation is undefined at scales $(scales[zero_indices]) because a marginal fluctuation is zero",
+        ),
+    )
+    value_type = eltype(covariances)
+    return clamp.(covariances ./ denominators, -one(value_type), one(value_type))
+end
+
 @doc doc"""
     dcca(first_series, second_series; kwargs...) -> DCCAResult
 
@@ -136,9 +153,10 @@ same boxes as default [`dfa`](@ref). The coefficient follows Zebende (2011).
 
 # Throws
 
-- `ArgumentError`: if the series differ in length or have fewer than 8 points, or
-  if fewer than two scales have positive detrended covariance in the fit range
-  (in which case inspect the `correlation` field instead of the exponent).
+- `ArgumentError`: if the series differ in length, have fewer than 8 points, or
+  either is constant; if a marginal fluctuation is zero; or if fewer than two
+  distinct scales have positive detrended covariance in the fit range (in which
+  case inspect analyses over a valid nondegenerate scale range).
 """
 function dcca(
         first_series::AbstractVector{<:Real},
@@ -154,6 +172,8 @@ function dcca(
     length(first_series) == length(second_series) ||
         throw(ArgumentError("the two series must have equal length"))
     length(first_series) >= 8 || throw(ArgumentError("series is too short for DCCA"))
+    __require_nonconstant_series(first_series, "DCCA")
+    __require_nonconstant_series(second_series, "DCCA")
     identical_series = first_series == second_series
 
     scales = Int.(collect(scales))
@@ -187,11 +207,14 @@ function dcca(
     if identical_series
         covariances = first_fluctuations .^ 2
         cross_fluctuations = copy(first_fluctuations)
-        correlation = ones(value_type, length(scales))
+        correlation = __dcca_correlation(
+            covariances, first_fluctuations, second_fluctuations, scales
+        )
     else
         cross_fluctuations = sign.(covariances) .* sqrt.(abs.(covariances))
-        correlation = covariances ./ (first_fluctuations .* second_fluctuations)
-        correlation = clamp.(correlation, -one(value_type), one(value_type))
+        correlation = __dcca_correlation(
+            covariances, first_fluctuations, second_fluctuations, scales
+        )
     end
     fit = __fit_cross_scaling(scales, covariances, cross_fluctuations; fitrange = fitrange)
 

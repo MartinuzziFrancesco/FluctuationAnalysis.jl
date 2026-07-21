@@ -133,7 +133,8 @@ against scale in log-log coordinates; the slope is the Hurst exponent.
 
 # Throws
 
-- `ArgumentError`: if `series` has fewer than 8 points.
+- `ArgumentError`: if `series` has fewer than 8 points or is constant, a scale is
+  invalid, or the fitted statistic is not positive and finite.
 """
 function hurst(
         series::AbstractVector{<:Real},
@@ -142,6 +143,7 @@ function hurst(
         fitrange::Union{Nothing, Tuple{<:Integer, <:Integer}} = nothing,
     )
     length(series) >= 8 || throw(ArgumentError("series is too short for Hurst estimation"))
+    __require_nonconstant_series(series, "Hurst estimation")
     scales = Int.(collect(scales))
     statistic = __hurst_statistic_curve(estimator, series, scales)
     fit = loglog_fit(scales, statistic; fitrange = fitrange)

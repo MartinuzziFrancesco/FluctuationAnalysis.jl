@@ -54,4 +54,9 @@
     @testset "segment shorter than order is rejected" begin
         @test_throws ArgumentError detrend(PolynomialDetrender(3), [1.0, 2.0, 3.0])
     end
+
+    @testset "numerically rank-deficient polynomial fit is rejected" begin
+        segment = Float32.(range(0.0, 1.0; length = 12))
+        @test_throws ArgumentError detrend(PolynomialDetrender(10), segment)
+    end
 end

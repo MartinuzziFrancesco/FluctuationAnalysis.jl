@@ -35,6 +35,7 @@
     @testset "validation" begin
         @test_throws ArgumentError dcca(randn(2000), randn(1999))      # unequal length
         @test_throws ArgumentError dcca([1.0, 2.0, 3.0], [1.0, 2.0, 3.0])  # too short
+        @test_throws ArgumentError dcca(ones(100), collect(1.0:100.0); scales = [8, 16])
     end
 end
 
@@ -46,6 +47,16 @@ end
     @testset "correlation stays within bounds" begin
         result = dcca(randn(MersenneTwister(8), 6000), randn(MersenneTwister(81), 6000))
         @test all(value -> -1.0 <= value <= 1.0, result.correlation)
+    end
+
+    @testset "signed and zero-denominator correlation conventions" begin
+        correlation = FluctuationAnalysis.__dcca_correlation(
+            [-2.0, 2.0], [2.0, 2.0], [1.0, 1.0], [8, 16]
+        )
+        @test correlation == [-1.0, 1.0]
+        @test_throws ArgumentError FluctuationAnalysis.__dcca_correlation(
+            [0.0, 1.0], [0.0, 1.0], [1.0, 1.0], [8, 16]
+        )
     end
 
     @testset "coupled series are strongly positively correlated" begin

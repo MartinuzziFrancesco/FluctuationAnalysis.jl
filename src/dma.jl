@@ -58,8 +58,9 @@ Its slope is the DMA scaling exponent, equal to [`mfdma`](@ref) at `q = 2`.
 
 # Throws
 
-- `ArgumentError`: if `series` has fewer than 8 points, or if a scale is too large
-  to form a residual segment.
+- `ArgumentError`: if `series` has fewer than 8 points or is constant, if a scale
+  cannot form a residual segment, or if the fitted fluctuations are not positive
+  and finite.
 """
 function dma(
         series::AbstractVector{<:Real};
@@ -70,6 +71,7 @@ function dma(
         fitrange::Union{Nothing, Tuple{<:Integer, <:Integer}} = nothing,
     )
     length(series) >= 8 || throw(ArgumentError("series is too short for DMA"))
+    __require_nonconstant_series(series, "DMA")
 
     scales = Int.(collect(scales))
     profile = integrated_profile(series; demean = demean)
