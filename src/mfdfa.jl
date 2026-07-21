@@ -33,16 +33,15 @@ function __q_order_fluctuations!(
 end
 
 function __mfdfa_fluctuations(
-        profile::AbstractVector{<:Real},
+        profile::AbstractVector{T},
         scales::AbstractVector{<:Integer},
         q_values::AbstractVector{<:Real},
         detrender::AbstractDetrender;
         overlap::Bool = false,
         bidirectional::Bool = true,
-    )
+    ) where {T <: Real}
     smallest_allowed = __minimum_segment_length(detrender)
-    value_type = float(eltype(profile))
-    fluctuations = zeros(value_type, length(scales), length(q_values))
+    fluctuations = zeros(T, length(scales), length(q_values))
     for (scale_index, scale) in pairs(scales)
         scale >= smallest_allowed ||
             throw(ArgumentError("scale $scale is too small for the chosen detrender"))

@@ -39,6 +39,9 @@ time series. More specifically the software offers:
   - **Reusable building blocks** (`logarithmic_scales`, `PolynomialDetrender`,
     `MovingAverage`, fluctuation curves, `loglog_fit`) shared across every method
     and exposed for building custom analyses.
+  - **ForwardDiff support** for derivatives with respect to the input series while
+    scales, moment orders, segmentation, detrending order, and fit ranges remain
+    fixed configuration.
 
 See the [documentation](https://MartinuzziFrancesco.github.io/FluctuationAnalysis.jl/dev/)
 for tutorials and the full API reference.

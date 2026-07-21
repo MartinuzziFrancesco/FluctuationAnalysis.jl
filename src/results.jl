@@ -15,7 +15,7 @@ See also [`DFAResult`](@ref), [`MFDFAResult`](@ref), [`DCCAResult`](@ref),
 abstract type AbstractFluctuationResult end
 
 """
-    scaling_exponent(result::AbstractFluctuationResult) -> AbstractFloat
+    scaling_exponent(result::AbstractFluctuationResult) -> Real
 
 Scaling exponent of an analysis: the slope of the log-log fit held by `result`.
 

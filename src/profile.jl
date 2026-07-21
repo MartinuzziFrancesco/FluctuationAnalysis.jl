@@ -1,5 +1,5 @@
 """
-    integrated_profile(series; demean = true) -> Vector{<:AbstractFloat}
+    integrated_profile(series; demean = true) -> Vector{<:Real}
 
 Construct the integrated profile of a time `series`, the cumulative sum of the
 mean-removed values. This is the first step shared by every method in the
@@ -17,7 +17,7 @@ a `Float32` profile and a `BigFloat` series a `BigFloat` profile.
 
 # Returns
 
-- `Vector{<:AbstractFloat}`: the integrated profile, of the same length as
+- `Vector{<:Real}`: the integrated profile, of the same length as
   `series` and element type `float(eltype(series))`.
 
 # Throws

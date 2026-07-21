@@ -48,7 +48,7 @@ __minimum_segment_length(detrender::PolynomialDetrender) = detrender.order + 2
 
 function __polynomial_design_matrix(
         segment_length::Integer, order::Integer, ::Type{T} = Float64
-    ) where {T <: AbstractFloat}
+    ) where {T <: Real}
     positions = range(zero(T), one(T); length = segment_length)
     design = zeros(T, segment_length, order + 1)
     for power in 0:order
@@ -73,7 +73,7 @@ the trend is the least-squares polynomial fit of the configured degree.
 
 # Returns
 
-- `Vector{<:AbstractFloat}`: the residuals `segment .- trend`, of the same length
+- `Vector{<:Real}`: the residuals `segment .- trend`, of the same length
   and (floated) element type as `segment`.
 
 # Throws
