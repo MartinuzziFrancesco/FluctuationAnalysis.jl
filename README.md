@@ -49,18 +49,18 @@ for tutorials and the full API reference.
 
 ## Installation
 
-FluctuationAnalysis.jl is not registered yet. You can install it directly from
-the repository using either of
+FluctuationAnalysis.jl is registered in the Julia General registry. Install it
+with
 
 ```julia
 julia> using Pkg
-julia> Pkg.add(url = "https://github.com/MartinuzziFrancesco/FluctuationAnalysis.jl")
+julia> Pkg.add("FluctuationAnalysis")
 ```
 
 or, from the Pkg REPL (press `]`):
 
 ```julia
-pkg> add https://github.com/MartinuzziFrancesco/FluctuationAnalysis.jl
+pkg> add FluctuationAnalysis
 ```
 
 ## Quick Example
