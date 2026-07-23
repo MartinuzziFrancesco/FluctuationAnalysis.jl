@@ -24,7 +24,7 @@ scaling_exponent(result)
 [`DFAResult`](@ref):
 
 ```@example dma
-result.fluctuations
+fluctuation_values(result)
 ```
 
 ## The window position

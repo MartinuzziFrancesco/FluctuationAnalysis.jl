@@ -1,5 +1,8 @@
 function __segment_views(
-        profile::AbstractVector, scale::Integer; overlap::Bool = false, bidirectional::Bool = true
+        profile::AbstractVector,
+        scale::Integer;
+        overlap::Bool = false,
+        bidirectional::Bool = true,
     )
     profile_length = length(profile)
     scale >= 2 || throw(ArgumentError("scale must be at least 2"))

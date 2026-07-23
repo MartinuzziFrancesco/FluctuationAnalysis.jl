@@ -38,22 +38,22 @@ As expected for white noise it is close to ``0.5``.
 the exponent:
 
 ```@example gs
-result.scales         # the window sizes that were evaluated
+analysis_scales(result)  # the window sizes that were evaluated
 ```
 
 ```@example gs
-result.fluctuations   # the fluctuation function F(s), one value per scale
+fluctuation_values(result)  # the fluctuation function F(s), one value per scale
 ```
 
 ```@example gs
-result.fit            # the log-log fit
+only(fit_results(result))  # the log-log fit
 ```
 
 The [`LogLogFit`](@ref) also records the intercept, the coefficient of
 determination, and the range of scales used:
 
 ```@example gs
-result.fit.rsquared
+only(fit_results(result)).rsquared
 ```
 
 ## Choosing the scales
@@ -64,7 +64,7 @@ your own range, or tune the generated one:
 ```@example gs
 scales = logarithmic_scales(length(series); minimum_scale=16, maximum_scale=1000)
 result = dfa(series; scales=scales)
-result.scales
+analysis_scales(result)
 ```
 
 Restrict the regression to a band of scales without changing which scales are

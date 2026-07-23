@@ -33,7 +33,7 @@ The DCCA cross-correlation coefficient ``\rho_{DCCA}(s)`` lies in ``[-1, 1]`` an
 is defined at every scale, even where the cross-correlation exponent is not:
 
 ```@example dcca
-result.correlation
+dcca_correlation(result)
 ```
 
 Because the two series share a strong common component, the coefficient is high
@@ -41,14 +41,14 @@ across scales:
 
 ```@example dcca
 using Statistics
-mean(result.correlation)
+mean(dcca_correlation(result))
 ```
 
 For independent series it collapses toward zero:
 
 ```@example dcca
 independent = dcca(randn(MersenneTwister(2), 10_000), randn(MersenneTwister(3), 10_000))
-mean(independent.correlation)
+mean(dcca_correlation(independent))
 ```
 
 ## The cross-correlation exponent
@@ -64,7 +64,8 @@ A [`DCCAResult`](@ref) also stores the signed covariance and the single-series
 fluctuations used to form the coefficient:
 
 ```@example dcca
-(cov=result.covariances[1], fx=result.first_fluctuations[1], fy=result.second_fluctuations[1])
+marginals = dcca_marginal_fluctuations(result)
+(cov=dcca_covariances(result)[1], fx=marginals.first[1], fy=marginals.second[1])
 ```
 
 ## Reduction to DFA
@@ -74,6 +75,6 @@ cross-covariance becomes the variance and ``\rho_{DCCA}(s) \equiv 1``.
 
 ```@example dcca
 self = dcca(first_series, first_series)
-(exponent=scaling_exponent(self), rho=mean(self.correlation))
+(exponent=scaling_exponent(self), rho=mean(dcca_correlation(self)))
 ```
 ```

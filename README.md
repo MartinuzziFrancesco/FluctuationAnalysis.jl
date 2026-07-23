@@ -75,8 +75,8 @@ using FluctuationAnalysis
 series = randn(10_000)
 
 result = dfa(series)
-result.scales              # the window sizes
-result.fluctuations        # the fluctuation function values
+analysis_scales(result)    # the window sizes
+fluctuation_values(result) # the fluctuation function values
 scaling_exponent(result)   # the DFA scaling exponent, ≈ 0.5
 
 # tune the detrending order, scales, and segmentation
@@ -84,7 +84,7 @@ result = dfa(series; order = 2, overlap = false, bidirectional = true)
 
 # multifractal spectrum over a range of moment orders q
 mf = mfdfa(series; q_values = collect(-5.0:0.5:5.0))
-mf.generalized_hurst       # h(q)
-mf.singularity_strengths   # α
-mf.singularity_spectrum    # f(α)
+generalized_hurst(mf)      # h(q)
+singularity_strengths(mf)  # α
+singularity_spectrum(mf)   # f(α)
 ```

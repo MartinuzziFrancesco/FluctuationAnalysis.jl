@@ -36,7 +36,10 @@
 
     @testset "central difference of a line is its slope" begin
         nodes = [1.0, 2.0, 3.0, 4.0]
-        @test FluctuationAnalysis.__central_difference(nodes, 3.0 .* nodes .+ 1.0) == fill(3.0, 4)
+        derivative = FluctuationAnalysis.__central_difference(
+            nodes, 3.0 .* nodes .+ 1.0
+        )
+        @test derivative == fill(3.0, 4)
     end
 
     @testset "central difference supports irregular q spacing" begin
@@ -94,8 +97,12 @@ end
         @test_throws ArgumentError mfdfa(randn(2000); q_values = [1.0])
         @test_throws ArgumentError mfdfa(randn(2000); q_values = [1.0, 1.0])
         @test_throws ArgumentError mfdfa(ones(100); q_values = [2.0, 4.0], scales = [8, 16])
-        @test_throws ArgumentError mfdfa(randn(100); q_values = [2.0, Inf], scales = [8, 16])
-        @test_throws ArgumentError mfdfa(randn(100); q_values = [2.0, NaN], scales = [8, 16])
+        @test_throws ArgumentError mfdfa(
+            randn(100); q_values = [2.0, Inf], scales = [8, 16]
+        )
+        @test_throws ArgumentError mfdfa(
+            randn(100); q_values = [2.0, NaN], scales = [8, 16]
+        )
     end
 end
 
@@ -128,7 +135,9 @@ end
         end
 
         cascade = binomial_cascade(14, 0.3, MersenneTwister(7))
-        scales = logarithmic_scales(length(cascade); minimum_scale = 16, maximum_scale = 1024)
+        scales = logarithmic_scales(
+            length(cascade); minimum_scale = 16, maximum_scale = 1024
+        )
         result = mfdfa(cascade; q_values = collect(-4.0:0.5:4.0), scales = scales)
         @test maximum(result.generalized_hurst) - minimum(result.generalized_hurst) > 0.3
     end
@@ -155,7 +164,9 @@ end
 
     analytic(q) = q == 0 ? -0.5 * (log2(p) + log2(1 - p)) : (1 - log2(p^q + (1 - p)^q)) / q
     q_values = [-3.0, -1.0, 1.0, 2.0, 3.0]
-    scales = logarithmic_scales(length(measure); minimum_scale = 32, maximum_scale = 4096, scale_count = 16)
+    scales = logarithmic_scales(
+        length(measure); minimum_scale = 32, maximum_scale = 4096, scale_count = 16
+    )
     result = mfdfa(measure; q_values = q_values, order = 1, scales = scales)
     for (index, q) in enumerate(result.q_values)
         @test isapprox(result.generalized_hurst[index], analytic(q); atol = 0.07)

@@ -32,6 +32,7 @@ include("hurst.jl")
 include("moving_average.jl")
 include("dma.jl")
 include("mfdma.jl")
+include("accessors.jl")
 
 export AbstractDetrender, PolynomialDetrender, detrend
 export integrated_profile, logarithmic_scales
@@ -43,5 +44,10 @@ export AbstractHurstEstimator, DetrendedFluctuationHurst, RescaledRangeHurst
 export HurstResult, hurst, hurst_exponent
 export MovingAverage, DMAResult, dma
 export MFDMAResult, mfdma
+export analysis_scales, fluctuation_values, fit_results, analysis_method
+export moment_orders, generalized_hurst, mass_exponents
+export singularity_strengths, singularity_spectrum
+export dcca_covariances, dcca_correlation, dcca_marginal_fluctuations
+export hurst_statistic
 
 end # module

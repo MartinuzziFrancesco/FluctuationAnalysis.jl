@@ -32,22 +32,16 @@ end
 Result of a detrended cross-correlation analysis of two time series, returned by
 [`dcca`](@ref).
 
-# Fields
+# Public interface
 
-- `scales::Vector{Int}`: window sizes at which the analysis was evaluated.
-- `covariances::Vector{T}`: detrended cross-covariance ``F^2_{DCCA}(s)`` (signed).
-- `cross_fluctuations::Vector{T}`: signed cross fluctuation
-  ``\mathrm{sign}(F^2)\sqrt{|F^2|}``.
-- `first_fluctuations::Vector{T}`: DFA fluctuation of the first series.
-- `second_fluctuations::Vector{T}`: DFA fluctuation of the second series.
-- `correlation::Vector{T}`: DCCA cross-correlation coefficient ``\rho_{DCCA}(s)``
-  in ``[-1, 1]``.
-- `detrender::AbstractDetrender`: detrender used to remove local trends.
-- `fit::LogLogFit{T}`: the fit whose `exponent` is the cross-correlation exponent,
-  taken over the scales with positive detrended covariance.
+Use [`analysis_scales`](@ref), [`fluctuation_values`](@ref),
+[`analysis_method`](@ref), [`fit_results`](@ref), [`dcca_covariances`](@ref),
+[`dcca_correlation`](@ref), [`dcca_marginal_fluctuations`](@ref), and
+[`scaling_exponent`](@ref) to inspect the result. Returned numeric values use the
+promotion of the two series' floated element types.
 
-The stored vectors and fit share the value type, the promotion of the two series'
-floated element types.
+Concrete fields are implementation details and are not part of the stable public
+interface.
 """
 @concrete struct DCCAResult <: AbstractFluctuationResult
     scales::Vector{Int}
@@ -83,8 +77,9 @@ function __fit_cross_scaling(
     selection = __scale_selection(scales, fitrange) .& (covariances .> 0)
     count(selection) >= 2 || throw(
         ArgumentError(
-            "fewer than two scales with positive detrended covariance in the fit range; " *
-                "a cross-correlation exponent is not defined, inspect the `correlation` field instead",
+            "fewer than two scales with positive detrended covariance in the " *
+                "fit range; a cross-correlation exponent is not defined; choose " *
+                "a fit range with at least two positive covariances",
         ),
     )
     return loglog_fit(scales[selection], cross_fluctuations[selection])
@@ -100,7 +95,8 @@ function __dcca_correlation(
     zero_indices = findall(iszero, denominators)
     isempty(zero_indices) || throw(
         ArgumentError(
-            "DCCA correlation is undefined at scales $(scales[zero_indices]) because a marginal fluctuation is zero",
+            "DCCA correlation is undefined at scales $(scales[zero_indices]) " *
+                "because a marginal fluctuation is zero",
         ),
     )
     value_type = eltype(covariances)
@@ -194,13 +190,21 @@ function dcca(
     first_fluctuations = convert(
         Vector{value_type},
         __fluctuation_curve(
-            first_profile, scales, detrender; overlap = overlap, bidirectional = bidirectional
+            first_profile,
+            scales,
+            detrender;
+            overlap = overlap,
+            bidirectional = bidirectional,
         ),
     )
     second_fluctuations = convert(
         Vector{value_type},
         __fluctuation_curve(
-            second_profile, scales, detrender; overlap = overlap, bidirectional = bidirectional
+            second_profile,
+            scales,
+            detrender;
+            overlap = overlap,
+            bidirectional = bidirectional,
         ),
     )
 

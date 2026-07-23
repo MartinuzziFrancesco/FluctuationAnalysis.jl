@@ -20,7 +20,9 @@ function __segment_variances(
         overlap::Bool = false,
         bidirectional::Bool = true,
     )
-    segments = __segment_views(profile, scale; overlap = overlap, bidirectional = bidirectional)
+    segments = __segment_views(
+        profile, scale; overlap = overlap, bidirectional = bidirectional
+    )
     return map(Base.Fix1(__segment_variance, detrender), segments)
 end
 

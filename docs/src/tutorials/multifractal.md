@@ -22,22 +22,23 @@ result = mfdfa(series; q_values=collect(-4.0:1.0:4.0))
 result
 ```
 
-A [`MFDFAResult`](@ref) exposes the moment-resolved quantities directly:
+A [`MFDFAResult`](@ref) exposes the moment-resolved quantities through stable
+accessors:
 
 ```@example mf
-result.generalized_hurst      # h(q)
+generalized_hurst(result)      # h(q)
 ```
 
 ```@example mf
-result.mass_exponents         # τ(q) = q·h(q) − 1
+mass_exponents(result)         # τ(q) = q·h(q) − 1
 ```
 
 ```@example mf
-result.singularity_strengths  # α
+singularity_strengths(result)  # α
 ```
 
 ```@example mf
-result.singularity_spectrum   # f(α)
+singularity_spectrum(result)   # f(α)
 ```
 
 At ``q = 2`` the analysis coincides with [`dfa`](@ref), so
@@ -53,7 +54,7 @@ For white noise the generalized Hurst exponents are nearly flat — a narrow spr
 of ``h(q)`` is the signature of a monofractal signal:
 
 ```@example mf
-maximum(result.generalized_hurst) - minimum(result.generalized_hurst)
+maximum(generalized_hurst(result)) - minimum(generalized_hurst(result))
 ```
 
 A multiplicative binomial cascade, by contrast, is strongly multifractal. Here
@@ -65,7 +66,11 @@ function binomial_cascade(levels, multiplier, rng)
     for _ in 1:levels
         refined = Vector{Float64}(undef, 2 * length(measure))
         for (index, value) in pairs(measure)
-            left, right = rand(rng) < 0.5 ? (multiplier, 1 - multiplier) : (1 - multiplier, multiplier)
+            left, right = if rand(rng) < 0.5
+                (multiplier, 1 - multiplier)
+            else
+                (1 - multiplier, multiplier)
+            end
             refined[2index - 1] = value * left
             refined[2index]     = value * right
         end
@@ -76,21 +81,22 @@ end
 
 cascade = binomial_cascade(14, 0.3, MersenneTwister(7))
 cascade_result = mfdfa(cascade; q_values=collect(-4.0:0.5:4.0))
-maximum(cascade_result.generalized_hurst) - minimum(cascade_result.generalized_hurst)
+maximum(generalized_hurst(cascade_result)) - minimum(generalized_hurst(cascade_result))
 ```
 
 The width of the singularity spectrum ``f(\alpha)`` measures the strength of the
 multifractality:
 
 ```@example mf
-maximum(cascade_result.singularity_strengths) - minimum(cascade_result.singularity_strengths)
+strengths = singularity_strengths(cascade_result)
+maximum(strengths) - minimum(strengths)
 ```
 
 ## Multifractal DMA
 
 [`mfdma`](@ref) takes the same `q_values` and returns an [`MFDMAResult`](@ref)
-with the same fields, using a moving-average detrending whose position is set by
-`theta`:
+with the same accessors, using a moving-average detrending whose position is set
+by `theta`:
 
 ```@example mf
 mfdma(cascade; q_values=collect(-4.0:0.5:4.0), theta=0.0) |> scaling_exponent

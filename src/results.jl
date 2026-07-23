@@ -9,6 +9,11 @@ A subtype that stores a [`LogLogFit`](@ref) in a field named `fit` inherits the
 default [`scaling_exponent`](@ref); subtypes whose scaling exponent is derived
 differently (such as [`MFDFAResult`](@ref)) override it.
 
+Consumers should use [`analysis_scales`](@ref), [`fluctuation_values`](@ref),
+[`fit_results`](@ref), and the method-specific result accessors instead of
+depending on concrete field layout. Subtypes extend the accessors that apply to
+their result data.
+
 See also [`DFAResult`](@ref), [`MFDFAResult`](@ref), [`DCCAResult`](@ref),
 [`DMAResult`](@ref), [`MFDMAResult`](@ref), and [`HurstResult`](@ref).
 """
@@ -69,15 +74,15 @@ end
 
 Result of a detrended fluctuation analysis, returned by [`dfa`](@ref).
 
-# Fields
+# Public interface
 
-- `scales::Vector{Int}`: window sizes at which the fluctuation was evaluated.
-- `fluctuations::Vector{T}`: fluctuation function values, one per scale.
-- `detrender::AbstractDetrender`: detrender used to remove local trends.
-- `fit::LogLogFit{T}`: the fit holding the scaling exponent and metadata.
+Use [`analysis_scales`](@ref), [`fluctuation_values`](@ref),
+[`analysis_method`](@ref), [`fit_results`](@ref), and
+[`scaling_exponent`](@ref) to inspect the result. The fluctuation values and fit
+preserve `float(eltype(series))`, including `Float32` and `BigFloat`.
 
-The fluctuations and fit share the value type `float(eltype(series))`, so the
-result preserves the precision of the input (`Float32`, `Float64`, `BigFloat`, ...).
+Concrete fields are implementation details and are not part of the stable public
+interface.
 """
 @concrete struct DFAResult <: AbstractFluctuationResult
     scales::Vector{Int}
