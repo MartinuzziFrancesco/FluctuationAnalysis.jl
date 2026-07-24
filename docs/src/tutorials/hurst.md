@@ -31,6 +31,13 @@ as [`hurst_exponent`](@ref) and through the generic [`scaling_exponent`](@ref).
 scaling_exponent(result) == hurst_exponent(result)
 ```
 
+The scale-dependent statistic used in the fit is available through
+[`hurst_statistic`](@ref):
+
+```@example hurst
+hurst_statistic(result)
+```
+
 ## Rescaled range analysis
 
 Passing [`RescaledRangeHurst`](@ref) switches to classic R/S analysis, where the

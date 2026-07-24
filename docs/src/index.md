@@ -12,14 +12,23 @@ estimation, on top of a small set of reusable building blocks.
 
 ## Methods
 
-| Function          | Method                                              | Primary reference                                                              |
-|:----------------- |:--------------------------------------------------- |:----------------------------------------------------------------------------- |
-| [`dfa`](@ref)     | Detrended fluctuation analysis (DFA)                | [Peng et al. (1994)](https://doi.org/10.1103/PhysRevE.49.1685); bidirectional segmentation from [Kantelhardt et al. (2002)](https://doi.org/10.1016/S0378-4371(02)01383-3) |
-| [`mfdfa`](@ref)   | Multifractal DFA                                    | [Kantelhardt et al. (2002)](https://doi.org/10.1016/S0378-4371(02)01383-3)     |
-| [`dcca`](@ref)    | Detrended cross-correlation analysis (DCCA)         | [Podobnik & Stanley (2008)](https://doi.org/10.1103/PhysRevLett.100.084102); coefficient from [Zebende (2011)](https://doi.org/10.1016/j.physa.2010.10.022) |
-| [`dma`](@ref)     | Detrending moving average (DMA), the ``q=2`` MFDMA case | [Gu & Zhou (2010)](https://doi.org/10.1103/PhysRevE.82.011136)              |
-| [`mfdma`](@ref)   | Multifractal DMA                                    | [Gu & Zhou (2010)](https://doi.org/10.1103/PhysRevE.82.011136)                 |
-| [`hurst`](@ref)   | Hurst exponent (DFA-based or rescaled range)        | [Hurst (1951)](https://doi.org/10.1061/TACEAT.0006518); [Peng et al. (1994)](https://doi.org/10.1103/PhysRevE.49.1685) |
+- [`dfa`](@ref): detrended fluctuation analysis, following
+  [Peng et al. (1994)](https://doi.org/10.1103/PhysRevE.49.1685), with
+  bidirectional segmentation from
+  [Kantelhardt et al. (2002)](https://doi.org/10.1016/S0378-4371(02)01383-3).
+- [`mfdfa`](@ref): multifractal DFA, following
+  [Kantelhardt et al. (2002)](https://doi.org/10.1016/S0378-4371(02)01383-3).
+- [`dcca`](@ref): detrended cross-correlation analysis, following
+  [Podobnik and Stanley (2008)](https://doi.org/10.1103/PhysRevLett.100.084102),
+  with the coefficient from
+  [Zebende (2011)](https://doi.org/10.1016/j.physa.2010.10.022).
+- [`dma`](@ref): detrending moving average, the ``q=2`` MFDMA case, following
+  [Gu and Zhou (2010)](https://doi.org/10.1103/PhysRevE.82.011136).
+- [`mfdma`](@ref): multifractal DMA, following
+  [Gu and Zhou (2010)](https://doi.org/10.1103/PhysRevE.82.011136).
+- [`hurst`](@ref): DFA-based or rescaled-range Hurst estimation, following
+  [Hurst (1951)](https://doi.org/10.1061/TACEAT.0006518) and
+  [Peng et al. (1994)](https://doi.org/10.1103/PhysRevE.49.1685).
 
 Every method shares the same pipeline — [`integrated_profile`](@ref),
 [`logarithmic_scales`](@ref), segmentation, detrending through the

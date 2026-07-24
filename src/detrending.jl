@@ -64,7 +64,8 @@ function __polynomial_factorization(design::AbstractMatrix{<:Real})
     tolerance = max(size(design)...) * eps(one(eltype(design))) * largest_diagonal
     minimum(abs, diagonal) > tolerance || throw(
         ArgumentError(
-            "polynomial detrending design is numerically rank deficient; reduce the detrending order or use a higher-precision input type",
+            "polynomial detrending design is numerically rank deficient; " *
+                "reduce the detrending order or use a higher-precision input type",
         ),
     )
     return factorization

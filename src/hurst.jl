@@ -50,15 +50,15 @@ law whose exponent is the Hurst exponent.
 
 Result of a Hurst exponent estimation, returned by [`hurst`](@ref).
 
-# Fields
+# Public interface
 
-- `estimator::AbstractHurstEstimator`: the estimator used.
-- `scales::Vector{Int}`: segment lengths at which the statistic was evaluated.
-- `statistic::Vector{T}`: the scale-dependent statistic, one per scale.
-- `fit::LogLogFit{T}`: the fit whose `exponent` is the Hurst exponent.
+Use [`analysis_scales`](@ref), [`hurst_statistic`](@ref),
+[`analysis_method`](@ref), [`fit_results`](@ref), [`hurst_exponent`](@ref), and
+[`scaling_exponent`](@ref) to inspect the result. The statistic and fit preserve
+`float(eltype(series))`.
 
-The statistic and fit share the value type `float(eltype(series))`, preserving the
-input precision.
+Concrete fields are implementation details and are not part of the stable public
+interface.
 """
 @concrete struct HurstResult <: AbstractFluctuationResult
     estimator
@@ -93,7 +93,9 @@ function __hurst_statistic_curve(
 end
 
 function __hurst_statistic_curve(
-        ::RescaledRangeHurst, series::AbstractVector{<:Real}, scales::AbstractVector{<:Integer}
+        ::RescaledRangeHurst,
+        series::AbstractVector{<:Real},
+        scales::AbstractVector{<:Integer},
     )
     values = float.(collect(series))
     statistic = similar(values, length(scales))

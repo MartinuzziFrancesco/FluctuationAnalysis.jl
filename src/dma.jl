@@ -3,15 +3,15 @@
 
 Result of a detrending moving average analysis, returned by [`dma`](@ref).
 
-# Fields
+# Public interface
 
-- `scales::Vector{Int}`: window sizes at which the fluctuation was evaluated.
-- `fluctuations::Vector{T}`: fluctuation function values, one per scale.
-- `moving_average::MovingAverage`: the moving-average specification used to detrend.
-- `fit::LogLogFit{T}`: the fit holding the scaling exponent and metadata.
+Use [`analysis_scales`](@ref), [`fluctuation_values`](@ref),
+[`analysis_method`](@ref), [`fit_results`](@ref), and
+[`scaling_exponent`](@ref) to inspect the result. The fluctuation values and fit
+preserve `float(eltype(series))`.
 
-The fluctuations and fit share the value type `float(eltype(series))`, preserving
-the input precision.
+Concrete fields are implementation details and are not part of the stable public
+interface.
 """
 @concrete struct DMAResult <: AbstractFluctuationResult
     scales::Vector{Int}

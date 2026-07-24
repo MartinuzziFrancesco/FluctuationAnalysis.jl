@@ -61,6 +61,27 @@ scaling_exponent
 AbstractFluctuationResult
 ```
 
+## Result accessors
+
+Use these accessors instead of depending on the concrete field layout of result
+types.
+
+```@docs
+analysis_scales
+fluctuation_values
+fit_results
+analysis_method
+moment_orders
+generalized_hurst
+mass_exponents
+singularity_strengths
+singularity_spectrum
+dcca_covariances
+dcca_correlation
+dcca_marginal_fluctuations
+hurst_statistic
+```
+
 ## Detrender interface
 
 ```@docs

@@ -22,7 +22,8 @@ function __q_order_fluctuations!(
     if any(<=(0), q_values) && any(iszero, variances)
         throw(
             ArgumentError(
-                "scale $scale produced a zero-variance segment; nonpositive multifractal moments are undefined",
+                "scale $scale produced a zero-variance segment; nonpositive " *
+                    "multifractal moments are undefined",
             ),
         )
     end
@@ -48,7 +49,9 @@ function __mfdfa_fluctuations(
         variances = __segment_variances(
             profile, scale, detrender; overlap = overlap, bidirectional = bidirectional
         )
-        __q_order_fluctuations!(view(fluctuations, scale_index, :), variances, q_values, scale)
+        __q_order_fluctuations!(
+            view(fluctuations, scale_index, :), variances, q_values, scale
+        )
     end
     return fluctuations
 end
@@ -120,21 +123,18 @@ end
 Result of a multifractal detrended fluctuation analysis, returned by
 [`mfdfa`](@ref).
 
-# Fields
+# Public interface
 
-- `q_values::Vector{T}`: moment orders, sorted ascending.
-- `scales::Vector{Int}`: window sizes at which the fluctuations were evaluated.
-- `fluctuations::Matrix{T}`: q-order fluctuations, indexed `[scale_index, q_index]`.
-- `detrender::AbstractDetrender`: detrender used to remove local trends.
-- `fits::Vector{LogLogFit{T}}`: the log-log fit of each `q` value.
-- `generalized_hurst::Vector{T}`: generalized Hurst exponents ``h(q)``.
-- `mass_exponents::Vector{T}`: mass scaling exponents ``\tau(q)``.
-- `singularity_strengths::Vector{T}`: singularity strengths ``\alpha``.
-- `singularity_spectrum::Vector{T}`: singularity spectrum ``f(\alpha)``.
+Use [`analysis_scales`](@ref), [`fluctuation_values`](@ref),
+[`analysis_method`](@ref), [`fit_results`](@ref), [`moment_orders`](@ref),
+[`generalized_hurst`](@ref), [`mass_exponents`](@ref),
+[`singularity_strengths`](@ref), [`singularity_spectrum`](@ref), and
+[`scaling_exponent`](@ref) to inspect the result.
 
-The result's value type is `float(eltype(series))`: the moment orders are cast to
-the data type, so a `Float32` series yields a `Float32` result regardless of the
-`q_values` type.
+The accessors preserve `float(eltype(series))`: moment orders are cast to the
+data type, so a `Float32` series yields `Float32` values regardless of the
+`q_values` type. Concrete fields are implementation details and are not part of
+the stable public interface.
 """
 @concrete struct MFDFAResult <: AbstractFluctuationResult
     q_values
@@ -215,14 +215,23 @@ function mfdfa(
     scales = Int.(collect(scales))
     profile = integrated_profile(series; demean = demean)
     fluctuations = __mfdfa_fluctuations(
-        profile, scales, sorted_q, detrender; overlap = overlap, bidirectional = bidirectional
+        profile,
+        scales,
+        sorted_q,
+        detrender;
+        overlap = overlap,
+        bidirectional = bidirectional,
     )
     # Carry the fluctuation value type through every derived quantity.
     q_values_typed = eltype(fluctuations).(sorted_q)
-    fits = __fit_generalized_hurst(scales, fluctuations, q_values_typed; fitrange = fitrange)
+    fits = __fit_generalized_hurst(
+        scales, fluctuations, q_values_typed; fitrange = fitrange
+    )
     hurst_values = [fit.exponent for fit in fits]
     mass_exponent_values = __compute_mass_exponents(q_values_typed, hurst_values)
-    strengths, spectrum = __compute_singularity_spectrum(q_values_typed, mass_exponent_values)
+    strengths, spectrum = __compute_singularity_spectrum(
+        q_values_typed, mass_exponent_values
+    )
 
     return MFDFAResult(
         q_values_typed,

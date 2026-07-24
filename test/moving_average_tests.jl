@@ -34,21 +34,29 @@
 
     @testset "moving average tracks a linear ramp with the expected lag" begin
         ramp = collect(1.0:10.0)
-        @test FA.__moving_average_trend(ramp, 4, MovingAverage(0.0)) ≈ collect(4.0:10.0) .- 1.5
-        @test FA.__moving_average_trend(ramp, 4, MovingAverage(1.0)) ≈ collect(1.0:7.0) .+ 1.5
+        @test FA.__moving_average_trend(ramp, 4, MovingAverage(0.0)) ≈
+            collect(4.0:10.0) .- 1.5
+        @test FA.__moving_average_trend(ramp, 4, MovingAverage(1.0)) ≈
+            collect(1.0:7.0) .+ 1.5
     end
 
     @testset "centered MA removes a line; one-sided MA leaves a constant offset" begin
         ramp = collect(1.0:10.0)
-        @test maximum(abs, FA.__moving_average_residual(ramp, 5, MovingAverage(0.5))) < 1.0e-10
-        @test all(value -> value ≈ 1.5, FA.__moving_average_residual(ramp, 4, MovingAverage(0.0)))
-        @test all(value -> value ≈ -1.5, FA.__moving_average_residual(ramp, 4, MovingAverage(1.0)))
+        centered = FA.__moving_average_residual(ramp, 5, MovingAverage(0.5))
+        backward = FA.__moving_average_residual(ramp, 4, MovingAverage(0.0))
+        forward = FA.__moving_average_residual(ramp, 4, MovingAverage(1.0))
+        @test maximum(abs, centered) < 1.0e-10
+        @test all(value -> value ≈ 1.5, backward)
+        @test all(value -> value ≈ -1.5, forward)
     end
 
     @testset "segment variances vanish for a perfectly detrended signal" begin
         ramp = collect(1.0:100.0)
         @test maximum(FA.__moving_average_variances(ramp, 5, MovingAverage(0.5))) < 1.0e-9
-        @test maximum(FA.__moving_average_variances(fill(2.0, 100), 5, MovingAverage(0.0))) < 1.0e-12
+        variances = FA.__moving_average_variances(
+            fill(2.0, 100), 5, MovingAverage(0.0)
+        )
+        @test maximum(variances) < 1.0e-12
         @test length(FA.__moving_average_variances(ramp, 5, MovingAverage(0.0))) ==
             fld(100 - 5 + 1, 5)
     end
@@ -57,7 +65,10 @@
         profile = cumsum(randn(MersenneTwister(7), 2000))
         scales = [8, 16, 32, 64]
         curve = FA.__dma_fluctuation_curve(profile, scales, MovingAverage(0.0))
-        @test curve == FA.__mfdma_fluctuations(profile, scales, [2.0], MovingAverage(0.0))[:, 1]
+        multifractal = FA.__mfdma_fluctuations(
+            profile, scales, [2.0], MovingAverage(0.0)
+        )
+        @test curve == multifractal[:, 1]
     end
 end
 
@@ -89,8 +100,14 @@ end
     series = randn(MersenneTwister(123), 1500)
     centered = series .- mean(series)        # integrated_profile(series; demean=true) input
     profile = cumsum(centered)
-    for theta in (0.0, 0.5, 1.0), window in (10, 17, 33, 64), order_q in (-3.0, 0.0, 2.0, 4.0)
-        mine = FA.__mfdma_fluctuations(profile, [window], [order_q], MovingAverage(theta))[1, 1]
-        @test isapprox(mine, reference_fluctuation(centered, window, order_q, theta); rtol = 1.0e-12)
+    theta_values = (0.0, 0.5, 1.0)
+    windows = (10, 17, 33, 64)
+    q_values = (-3.0, 0.0, 2.0, 4.0)
+    for theta in theta_values, window in windows, order_q in q_values
+        mine = FA.__mfdma_fluctuations(
+            profile, [window], [order_q], MovingAverage(theta)
+        )[1, 1]
+        reference = reference_fluctuation(centered, window, order_q, theta)
+        @test isapprox(mine, reference; rtol = 1.0e-12)
     end
 end

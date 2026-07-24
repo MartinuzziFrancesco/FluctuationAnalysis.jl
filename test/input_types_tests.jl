@@ -79,11 +79,13 @@ end
     baseline = scaling_exponent(dfa(a; scales = scales))
 
     @testset "Float32 input is accepted and close" begin
-        @test isapprox(scaling_exponent(dfa(Float32.(a); scales = scales)), baseline; atol = 1.0e-2)
+        exponent = scaling_exponent(dfa(Float32.(a); scales = scales))
+        @test isapprox(exponent, baseline; atol = 1.0e-2)
     end
 
     @testset "BigFloat input is accepted and close" begin
-        @test isapprox(scaling_exponent(dfa(big.(a); scales = scales)), baseline; atol = 1.0e-6)
+        exponent = scaling_exponent(dfa(big.(a); scales = scales))
+        @test isapprox(exponent, baseline; atol = 1.0e-6)
     end
 
     @testset "integer input runs and gives a finite exponent" begin
@@ -117,20 +119,20 @@ end
     @testset "BigFloat flows through the multifractal and cross methods" begin
         series = big.(a)
         other = big.(cumsum(randn(MersenneTwister(5), length(a))) .+ a)
-        @test eltype(mfdfa(series; q_values = [2.0, 3.0], scales = scales).generalized_hurst) ==
-            BigFloat
-        @test eltype(mfdma(series; q_values = [2.0, 3.0], scales = scales).generalized_hurst) ==
-            BigFloat
+        mfdfa_result = mfdfa(series; q_values = [2.0, 3.0], scales = scales)
+        mfdma_result = mfdma(series; q_values = [2.0, 3.0], scales = scales)
+        @test eltype(generalized_hurst(mfdfa_result)) == BigFloat
+        @test eltype(generalized_hurst(mfdma_result)) == BigFloat
         @test eltype(dcca(series, other; scales = scales).correlation) == BigFloat
     end
 
     @testset "multifractal preserves the series type regardless of q" begin
         # Float32 data keeps Float32 even though q_values are Float64 (cast to data type).
-        @test eltype(mfdfa(Float32.(a); q_values = [2.0, 3.0], scales = scales).generalized_hurst) ==
-            Float32
-        @test eltype(mfdma(Float32.(a); q_values = [2.0, 3.0], scales = scales).generalized_hurst) ==
-            Float32
-        @test eltype(mfdfa(Float32.(a); q_values = [2.0, 3.0], scales = scales).q_values) == Float32
+        mfdfa_result = mfdfa(Float32.(a); q_values = [2.0, 3.0], scales = scales)
+        mfdma_result = mfdma(Float32.(a); q_values = [2.0, 3.0], scales = scales)
+        @test eltype(generalized_hurst(mfdfa_result)) == Float32
+        @test eltype(generalized_hurst(mfdma_result)) == Float32
+        @test eltype(moment_orders(mfdfa_result)) == Float32
     end
 end
 
@@ -145,7 +147,8 @@ end
 
     @testset "offset scales give the same exponent" begin
         offset_scales = OffsetArray(scale_values, 0:(length(scale_values) - 1))
-        @test isapprox(scaling_exponent(dfa(a; scales = offset_scales)), baseline; atol = 1.0e-12)
+        exponent = scaling_exponent(dfa(a; scales = offset_scales))
+        @test isapprox(exponent, baseline; atol = 1.0e-12)
     end
 
     @testset "stepped integer input is accepted as scales" begin
@@ -154,7 +157,9 @@ end
 
     @testset "non-Int integer scales are accepted" begin
         @test isapprox(
-            scaling_exponent(dfa(a; scales = Int32.(scale_values))), baseline; atol = 1.0e-12
+            scaling_exponent(dfa(a; scales = Int32.(scale_values))),
+            baseline;
+            atol = 1.0e-12,
         )
     end
 end

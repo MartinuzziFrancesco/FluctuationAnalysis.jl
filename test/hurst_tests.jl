@@ -54,7 +54,9 @@ end
             atol = 0.05,
         )
         @test isapprox(
-            hurst_exponent(hurst(series, RescaledRangeHurst(); scales = scales)), 0.5; atol = 0.1
+            hurst_exponent(hurst(series, RescaledRangeHurst(); scales = scales)),
+            0.5;
+            atol = 0.1,
         )
     end
 

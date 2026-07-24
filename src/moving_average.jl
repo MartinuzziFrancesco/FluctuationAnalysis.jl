@@ -57,7 +57,8 @@ end
 
 function __window_offsets(window::Integer, theta::Real)
     window >= 2 || throw(ArgumentError("moving-average window must be at least 2"))
-    0 <= theta <= 1 || throw(ArgumentError("moving-average position theta must lie in [0, 1]"))
+    0 <= theta <= 1 ||
+        throw(ArgumentError("moving-average position theta must lie in [0, 1]"))
     future = floor(Int, (window - 1) * theta)
     past = (window - 1) - future
     return past, future
@@ -119,7 +120,9 @@ function __mfdma_fluctuations(
     fluctuations = zeros(T, length(scales), length(q_values))
     for (scale_index, scale) in pairs(scales)
         variances = __moving_average_variances(profile, scale, moving_average_spec)
-        __q_order_fluctuations!(view(fluctuations, scale_index, :), variances, q_values, scale)
+        __q_order_fluctuations!(
+            view(fluctuations, scale_index, :), variances, q_values, scale
+        )
     end
     return fluctuations
 end

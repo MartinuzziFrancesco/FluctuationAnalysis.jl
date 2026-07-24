@@ -28,4 +28,6 @@ makedocs(;
     ],
 )
 
-deploydocs(; repo = "github.com/MartinuzziFrancesco/FluctuationAnalysis.jl", devbranch = "main")
+deploydocs(
+    ; repo = "github.com/MartinuzziFrancesco/FluctuationAnalysis.jl", devbranch = "main"
+)

@@ -33,7 +33,9 @@
         series = randn(MersenneTwister(2), 3000)
         q_values = collect(-2.0:1.0:2.0)
         @test mfdma(series; q_values = q_values, theta = 0.5).fluctuations ==
-            mfdma(series; q_values = q_values, moving_average = MovingAverage(0.5)).fluctuations
+            mfdma(
+            series; q_values = q_values, moving_average = MovingAverage(0.5)
+        ).fluctuations
     end
 
     @testset "scaling_exponent requires q = 2" begin
@@ -46,8 +48,12 @@
         @test_throws ArgumentError mfdma(randn(2000); q_values = [1.0])
         @test_throws ArgumentError mfdma(randn(2000); q_values = [1.0, 1.0])
         @test_throws ArgumentError mfdma(ones(100); q_values = [2.0, 4.0], scales = [8, 16])
-        @test_throws ArgumentError mfdma(randn(100); q_values = [2.0, Inf], scales = [8, 16])
-        @test_throws ArgumentError mfdma(randn(100); q_values = [2.0, NaN], scales = [8, 16])
+        @test_throws ArgumentError mfdma(
+            randn(100); q_values = [2.0, Inf], scales = [8, 16]
+        )
+        @test_throws ArgumentError mfdma(
+            randn(100); q_values = [2.0, NaN], scales = [8, 16]
+        )
     end
 end
 
@@ -80,7 +86,9 @@ end
         end
 
         cascade = binomial_cascade(14, 0.3, MersenneTwister(7))
-        scales = logarithmic_scales(length(cascade); minimum_scale = 16, maximum_scale = 1024)
+        scales = logarithmic_scales(
+            length(cascade); minimum_scale = 16, maximum_scale = 1024
+        )
         result = mfdma(cascade; q_values = collect(-4.0:0.5:4.0), scales = scales)
         @test maximum(result.generalized_hurst) - minimum(result.generalized_hurst) > 0.3
     end

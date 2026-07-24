@@ -31,12 +31,16 @@
             multiplier -> analysis(series .+ multiplier .* direction), 0.0
         )
         finite_difference =
-            (analysis(series .+ step .* direction) - analysis(series .- step .* direction)) /
-            (2step)
+            (
+            analysis(series .+ step .* direction) -
+                analysis(series .- step .* direction)
+        ) / (2step)
         @testset "$name" begin
             @test isfinite(forward_derivative)
             @test !iszero(forward_derivative)
-            @test isapprox(forward_derivative, finite_difference; rtol = 2.0e-4, atol = 1.0e-7)
+            @test isapprox(
+                forward_derivative, finite_difference; rtol = 2.0e-4, atol = 1.0e-7
+            )
         end
     end
 end

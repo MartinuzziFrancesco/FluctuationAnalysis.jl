@@ -45,52 +45,79 @@ function fractional_gaussian_noise(n_samples::Integer, hurst::Real; rng::Abstrac
 end
 end
 
-@testitem "dfa: recovers an intermediate Hurst exponent from fGn" setup = [FractionalNoise] begin
+@testitem "dfa: intermediate Hurst recovery from fGn" setup = [FractionalNoise] begin
     using FluctuationAnalysis
     using Random: MersenneTwister
     using Statistics: mean
 
     rng = MersenneTwister(11)
-    scales = logarithmic_scales(4096; minimum_scale = 16, maximum_scale = 1024, scale_count = 20)
+    scales = logarithmic_scales(
+        4096; minimum_scale = 16, maximum_scale = 1024, scale_count = 20
+    )
     for hurst_value in (0.3, 0.6, 0.8)
         estimates = [
-            scaling_exponent(dfa(FractionalNoise.fractional_gaussian_noise(4096, hurst_value; rng = rng); scales = scales))
+            scaling_exponent(
+                    dfa(
+                        FractionalNoise.fractional_gaussian_noise(
+                            4096, hurst_value; rng = rng
+                        );
+                        scales = scales,
+                    ),
+                )
                 for _ in 1:4
         ]
         @test isapprox(mean(estimates), hurst_value; atol = 0.06)
     end
 end
 
-@testitem "hurst: estimators recover an intermediate Hurst exponent from fGn" setup = [FractionalNoise] begin
+@testitem "hurst: intermediate Hurst recovery from fGn" setup = [FractionalNoise] begin
     using FluctuationAnalysis
     using Random: MersenneTwister
     using Statistics: mean
 
     rng = MersenneTwister(13)
-    scales = logarithmic_scales(4096; minimum_scale = 16, maximum_scale = 1024, scale_count = 20)
+    scales = logarithmic_scales(
+        4096; minimum_scale = 16, maximum_scale = 1024, scale_count = 20
+    )
     for hurst_value in (0.3, 0.7)
-        series = [FractionalNoise.fractional_gaussian_noise(4096, hurst_value; rng = rng) for _ in 1:4]
-        dfa_hurst = mean(hurst_exponent(hurst(value, DetrendedFluctuationHurst(); scales = scales)) for value in series)
+        series = [
+            FractionalNoise.fractional_gaussian_noise(4096, hurst_value; rng = rng)
+                for _ in 1:4
+        ]
+        dfa_hurst = mean(
+            hurst_exponent(
+                    hurst(value, DetrendedFluctuationHurst(); scales = scales)
+                ) for value in series
+        )
         @test isapprox(dfa_hurst, hurst_value; atol = 0.06)
         # Classic R/S carries a known finite-sample bias, so it gets a looser bound.
-        rs_hurst = mean(hurst_exponent(hurst(value, RescaledRangeHurst(); scales = scales)) for value in series)
+        rs_hurst = mean(
+            hurst_exponent(hurst(value, RescaledRangeHurst(); scales = scales))
+                for value in series
+        )
         @test isapprox(rs_hurst, hurst_value; atol = 0.13)
     end
 end
 
-@testitem "dcca: cross-exponent matches the shared Hurst of coupled fGn" setup = [FractionalNoise] begin
+@testitem "dcca: coupled fGn cross-exponent" setup = [FractionalNoise] begin
     using FluctuationAnalysis
     using Random: MersenneTwister
     using Statistics: mean
 
     rng = MersenneTwister(17)
     hurst_value = 0.7
-    scales = logarithmic_scales(4096; minimum_scale = 16, maximum_scale = 1024, scale_count = 20)
+    scales = logarithmic_scales(
+        4096; minimum_scale = 16, maximum_scale = 1024, scale_count = 20
+    )
     lambdas = Float64[]
     for _ in 1:4
         shared = FractionalNoise.fractional_gaussian_noise(4096, hurst_value; rng = rng)
-        first_noise = FractionalNoise.fractional_gaussian_noise(4096, hurst_value; rng = rng)
-        second_noise = FractionalNoise.fractional_gaussian_noise(4096, hurst_value; rng = rng)
+        first_noise = FractionalNoise.fractional_gaussian_noise(
+            4096, hurst_value; rng = rng
+        )
+        second_noise = FractionalNoise.fractional_gaussian_noise(
+            4096, hurst_value; rng = rng
+        )
         first_series = sqrt(0.5) .* shared .+ sqrt(0.5) .* first_noise
         second_series = sqrt(0.5) .* shared .+ sqrt(0.5) .* second_noise
         push!(lambdas, scaling_exponent(dcca(first_series, second_series; scales = scales)))

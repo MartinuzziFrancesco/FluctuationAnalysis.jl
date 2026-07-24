@@ -39,7 +39,8 @@ end
         for theta in (0.0, 0.5, 1.0)
             series = randn(MersenneTwister(42), 30_000)
             scales = logarithmic_scales(30_000; minimum_scale = 16, maximum_scale = 3000)
-            @test isapprox(scaling_exponent(dma(series; theta = theta, scales = scales)), 0.5; atol = 0.05)
+            exponent = scaling_exponent(dma(series; theta = theta, scales = scales))
+            @test isapprox(exponent, 0.5; atol = 0.05)
         end
     end
 

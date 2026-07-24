@@ -4,7 +4,9 @@
 
     @testset "linear profile has zero variance under linear detrending" begin
         profile = collect(1.0:20.0)
-        @test FluctuationAnalysis.__segment_variance(PolynomialDetrender(1), profile) < 1.0e-10
+        @test FluctuationAnalysis.__segment_variance(
+            PolynomialDetrender(1), profile
+        ) < 1.0e-10
     end
 
     @testset "segment covariance reduces to variance for equal segments" begin
@@ -19,14 +21,17 @@
 
     @testset "fluctuation of a linear profile vanishes" begin
         profile = collect(1.0:64.0)
-        @test FluctuationAnalysis.__fluctuation_at_scale(profile, 8, PolynomialDetrender(1)) <
-            1.0e-10
+        @test FluctuationAnalysis.__fluctuation_at_scale(
+            profile, 8, PolynomialDetrender(1)
+        ) < 1.0e-10
     end
 
     @testset "fluctuation grows with scale for a random walk" begin
         walk = cumsum(randn(MersenneTwister(1), 2000))
         small = FluctuationAnalysis.__fluctuation_at_scale(walk, 8, PolynomialDetrender(1))
-        large = FluctuationAnalysis.__fluctuation_at_scale(walk, 128, PolynomialDetrender(1))
+        large = FluctuationAnalysis.__fluctuation_at_scale(
+            walk, 128, PolynomialDetrender(1)
+        )
         @test large > small
     end
 
