@@ -60,3 +60,30 @@
         @test_throws ArgumentError detrend(PolynomialDetrender(10), segment)
     end
 end
+
+@testitem "custom detrender interface" begin
+    using FluctuationAnalysis
+
+    import FluctuationAnalysis: detrend
+
+    struct MeanDetrender <: AbstractDetrender end
+
+    function detrend(::MeanDetrender, segment::AbstractVector{<:Real})
+        values = float.(collect(segment))
+        return values .- sum(values) / length(values)
+    end
+
+    series = sin.(range(0.0, 30.0; length = 256)) .+ 0.01 .* collect(1:256)
+    scales = [8, 16, 32]
+    detrender = MeanDetrender()
+
+    @test FluctuationAnalysis.__minimum_segment_length(detrender) == 2
+    @test dfa(series; scales = scales, detrender = detrender) isa DFAResult
+    @test mfdfa(
+        series; q_values = [2.0, 3.0], scales = scales, detrender = detrender
+    ) isa MFDFAResult
+    @test dcca(series, series; scales = scales, detrender = detrender) isa DCCAResult
+    @test hurst(
+        series, DetrendedFluctuationHurst(detrender); scales = scales
+    ) isa HurstResult
+end

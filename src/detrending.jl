@@ -15,6 +15,9 @@ A concrete subtype `D <: AbstractDetrender` must implement:
 - `detrend(detrender::D, segment)`: return the residuals of `segment` after
   removing the estimated trend.
 
+Analyses use a minimum segment length of two for custom detrenders. Implementations
+with stricter requirements should validate the segment length in `detrend`.
+
 See also [`PolynomialDetrender`](@ref) and [`detrend`](@ref).
 """
 abstract type AbstractDetrender end
@@ -44,6 +47,7 @@ struct PolynomialDetrender <: AbstractDetrender
     end
 end
 
+__minimum_segment_length(::AbstractDetrender) = 2
 __minimum_segment_length(detrender::PolynomialDetrender) = detrender.order + 2
 
 function __polynomial_design_matrix(
